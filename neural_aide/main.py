@@ -58,7 +58,7 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
                              nb_biased_epoch=2000, use_main_weights=False,
                              display=False, save_plot=False, query=1,
                              biased_lr=0.001, tsm=False, pltlim=True,
-                             tsm_lim=None):
+                             tsm_lim=None, reduce_factor=None):
     """
     Run the active search.
     Params:
@@ -91,6 +91,10 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
         pltlim (boolean): Zoom on the positive area
         tsm_lim (integerr): Maximum number of tuples examined during one
             iteration of tsm.update_regions
+        reduce_factor (real or string): The gradients of the biased sample will
+            be divided by this factor. If None, it will be equal to
+            len(biased_sample). If "evolutive", it will be equal to
+            len(biased_samples) * 2. / X_train.shape[0].
     """
 
     SAVING_DIRECTORY = pjoin(ressources_folder, "results")
@@ -102,9 +106,10 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
     for name, value in zip([
             "qdb", "random", "shapes", "include_background", "evolutive_small",
             "nb_biased_epoch", "use_main_weights", "query", "tsm",
+            "reduce_factor"
                             ], [
             qdb, random, shapes, include_background, evolutive_small,
-            nb_biased_epoch, use_main_weights, query, tsm
+            nb_biased_epoch, use_main_weights, query, tsm, reduce_factor,
                                ]):
 
         identifier += "_" + name + "_" + str(value)
@@ -183,6 +188,7 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
             include_background=include_background,
             evolutive_small=evolutive_small, nb_biased_epoch=nb_biased_epoch,
             biased_lr=biased_lr, tsm=tsm, tsm_lim=tsm_lim,
+            reduce_factor=reduce_factor,
         )
     else:
         neural_aide.active_search.active_search(
@@ -197,5 +203,5 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
             include_background=include_background,
             evolutive_small=evolutive_small, nb_biased_epoch=nb_biased_epoch,
             biased_lr=biased_lr, tsm=tsm, tsm_lim=tsm_lim,
+            reduce_factor=reduce_factor,
         )
-

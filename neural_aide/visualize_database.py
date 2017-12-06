@@ -80,6 +80,127 @@ def plot_filters(xs, ys, path):
     plt.show()
 
 
+def plot_advancement_uncertainty_search(X_train, y_train, X_val, y_val,
+                                        old_pred, new_pred, save_path=None,
+                                        show=False, xlim=None, ylim=None):
+    """
+    Plot 3 figures to vizualize the progress of the uncertainty search.
+    Params:
+        X (np.array): Data to visualize.
+        y (np.array): True labels
+        old_pred (np.array): Labels given at the last iteration.
+        new_pred (np.array): Labels given at the current iteration.
+        save_path (string): where to save the plot. If None, the plot is not
+            save.
+        show (boolean): if True, display the graphique.
+        xlim (2-uple of integers): limits of the x axis.
+        ylim (2-uple of integers): limits of the y axis.
+    """
+    colors = ["red", "green"]
+
+    plt.figure(1)
+    # Plot the old predictions with uncertain points
+    plt.subplot(131)
+
+    if xlim is not None:
+        plt.xlim(xlim)
+    if ylim is not None:
+        plt.ylim(ylim)
+
+    plt.scatter(X_val[:, 0], X_val[:, 1],
+                c=[colors[int(j > 0.5)] for j in old_pred])
+
+    plt.scatter(X_train[:, 0], X_train[:, 1],
+                c=["grey" for j in range(X_train.shape[0]-1)] + ["black"])
+
+    plt.grid(True)
+
+    plt.subplot(132)
+
+    if xlim is not None:
+        plt.xlim(xlim)
+    if ylim is not None:
+        plt.ylim(ylim)
+
+    plt.scatter(X_val[:, 0], X_val[:, 1],
+                c=[colors[int(j > 0.5)] for j in new_pred])
+
+    plt.scatter(X_train[:, 0], X_train[:, 1],
+                c=["grey" for j in range(X_train.shape[0]-1)] + ["black"])
+
+    plt.grid(True)
+
+    plt.subplot(133)
+
+    if xlim is not None:
+        plt.xlim(xlim)
+    if ylim is not None:
+        plt.ylim(ylim)
+
+    plt.scatter(X_val[:, 0], X_val[:, 1],
+                c=[colors[int(k)] for k in y_val.reshape(-1)])
+
+    plt.scatter(X_train[:, 0], X_train[:, 1],
+                c=["grey" for j in range(X_train.shape[0]-1)] + ["black"])
+    plt.grid(True)
+
+    if save_path is not None:
+        plt.savefig(save_path)
+
+    if show:
+        plt.show()
+
+    plt.clf()
+
+
+def random_uncertainty_plot(X_train, y_train, X_val, y_val, old_pred, new_pred,
+                            n_points=10000, save_path=None, show=False,
+                            xlim=None, ylim=None):
+    """
+    Plot 4 figures with random pointsto vizualize the progress of the qdb
+    search.
+    Params:
+        X (np.array): Data to visualize.
+        y (np.array): True labels.
+        old_pred (np.array): Labels given at the last iteration.
+        new_pred (np.array): Labels given at the current iteration.
+        n_points (integer): number of points to plot.
+        save_path (string): where to save the plot. If None, the plot is not
+            save.
+        show (boolean): if True, display the graphique.
+        xlim (2-uple of integers): limits of the x axis.
+        ylim (2-uple of integers): limits of the y axis.
+    """
+    if (((xlim is None) and (ylim is not None))
+            or ((ylim is None) and (xlim is not None))):
+        raise Exception("Not implemented yet !")
+
+    if xlim is not None:
+        availablelity_filter = (
+            (X_val[:, 0] > xlim[0])
+            * (X_val[:, 0] < xlim[1])
+            * (X_val[:, 1] > ylim[0])
+            * (X_val[:, 1] < ylim[1])
+            )
+        available_points = np.where(availablelity_filter == 1)[0]
+    else:
+        available_points = np.ones(y_val.shape[0]).astype(bool)
+
+    order = np.arange(y_val[available_points].shape[0])
+    np.random.shuffle(order)
+    order = order[:min(n_points, y_val[available_points].shape[0])]
+
+    X_to_plot = X_val[available_points][order]
+    y_to_plot = y_val[available_points][order]
+    old_pred_to_plot = old_pred[available_points][order]
+    new_pred_to_plot = new_pred[available_points][order]
+
+    plot_advancement_uncertainty_search(
+        X_train, y_train, X_to_plot, y_to_plot, old_pred_to_plot,
+        new_pred_to_plot, save_path, show, xlim, ylim
+        )
+
+
 def plot_advancement_qdb_search(X_train, y_train, X_val, y_val, old_pred,
                                 new_pred, pred_pos, pred_neg,
                                 uncertain_samples, save_path=None, show=False,

@@ -15,12 +15,13 @@ EVOLUTIVE_SMALL = True
 NB_BIASED_EPOCH = 2000
 USE_MAIN_WEIGHTS = False
 DISPLAY = False
-SAVE_PLOT = True
-QUERY = 1
-BIASED_LR = 0.01
+SAVE_PLOT = False
+QUERY = 2
+BIASED_LR = 0.001
 TSM = True
-PLTLIM = False
-TSM_LIM = 10000
+PLTLIM = True
+TSM_LIM = None
+REDUCE_FACTOR = None
 
 try:
     main.run_experiment_with_sdss(RESSOURCES_FOLDER, qdb=QDB, random=RANDOM,
@@ -30,6 +31,6 @@ try:
                         use_main_weights=USE_MAIN_WEIGHTS,
                         display=DISPLAY, save_plot=SAVE_PLOT, query=QUERY,
                         biased_lr=BIASED_LR, tsm=TSM, pltlim=PLTLIM,
-                        tsm_lim=TSM_LIM)
+                        tsm_lim=TSM_LIM, reduce_factor=REDUCE_FACTOR)
 except Exception as e:
     logging.exception("Here is the error")

@@ -243,7 +243,7 @@ class ActiveNeuralNetwork:
                  X_val=None, y_val=None, n_epoch=100, callback=True,
                  saving=True, save_path="./model.ckpt", warmstart=False,
                  weights_path="./model.kpt", display_step=50, stop_at_1=False,
-                 nb_min_epoch=50):
+                 nb_min_epoch=50, reduce_factor=1):
         """
         Train the model on given data.
 
@@ -272,6 +272,8 @@ class ActiveNeuralNetwork:
                 training score reach one.
             nb_min_epoch (int): Minimal number of epoch before the stop of the
                 training
+            reduce_factor (real): The gradients of X_small will be divided
+                by this factor.
 
         Return:
             dictionnary: If callback==True, return the callback.
@@ -300,7 +302,7 @@ class ActiveNeuralNetwork:
                                        X_small, y_small, X_val, y_val,
                                        best_val_error, best_n_epoch, callback,
                                        dico_callback, display_step, saving,
-                                       save_path)
+                                       save_path, reduce_factor)
                 )
 
             if stop_at_1 and (nb_epoch >= nb_min_epoch):
@@ -319,7 +321,8 @@ class ActiveNeuralNetwork:
                           y_small=None, X_val=None, y_val=None,
                           best_val_error=None, best_n_epoch=None,
                           callback=True, dico_callback={}, display_step=50,
-                          saving=True, save_path="./model.ckpt"):
+                          saving=True, save_path="./model.ckpt",
+                          reduce_factor=1):
         """
         Run the training for 1 epoch.
 
@@ -344,6 +347,8 @@ class ActiveNeuralNetwork:
             saving (boolean): If true, the best model will be saved in the
                 save_dir folder.
             save_path (string): where to save the file if saving==True.
+            reduce_factor (real): the gradients of X_small will be divided by
+                this factor
 
         Returns:
             dictionary: dictionary where callbacks are saved,
@@ -375,7 +380,7 @@ class ActiveNeuralNetwork:
             feed_dict_temp = feed_dict
             feed_dict_temp[self.input_tensor] = X_small
             feed_dict_temp[self.true_labels] = y_small
-            feed_dict_temp[self.reduce_factor] = X_small.shape[0]
+            feed_dict_temp[self.reduce_factor] = reduce_factor
 
             sess.run(self.apply_small_gradients, feed_dict=feed_dict_temp)
 
