@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import numpy as np
+import logging
 
 
 class Facet():
@@ -40,6 +41,7 @@ class Facet():
         orientation is futher defined with check_ref.
         """
         if np.linalg.matrix_rank(self.vertices) == self.vertices.shape[1]:
+            logging.debug("Here are my vertices: %s" % (self.vertices,))
             self.coefs = np.linalg.solve(self.vertices, np.ones((self.dim, 1)))
             norm = np.linalg.norm(self.coefs)
             self.coefs = self.coefs.T / norm

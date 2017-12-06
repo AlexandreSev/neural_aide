@@ -6,6 +6,7 @@ import logging
 
 from .facet import Facet
 
+
 class NegRegion():
     """
     Implement the complement of a convex polytope to create negative region
@@ -26,7 +27,7 @@ class NegRegion():
         self.dim = self.neg_sample.shape[1]
 
         # Creation with dim points and not a positive region
-        if (pos_samples is not None): 
+        if (pos_samples is not None):
 
             if ((self.dim) != pos_samples.shape[0]):
                 raise ValueError("Wrong number of samples")
@@ -70,17 +71,17 @@ class NegRegion():
             logging.debug("pos_vertice shape: %s" % (self.pos_vertices.shape,))
 
             facet_points = np.vstack((
-                self.neg_sample, 
+                self.neg_sample,
                 np.delete(self.pos_vertices, (sample_id), axis=0),
                 ))
 
             self.facets.append(
-                Facet(facet_points, self.pos_vertices[sample_id, :], 
+                Facet(facet_points, self.pos_vertices[sample_id, :],
                       refisneg=False)
                 )
         # Create facet which does not contain the negative point
         self.useless_facets = [Facet(self.pos_vertices, self.neg_sample,
-                                   refisneg=True)]
+                                     refisneg=True)]
 
     def _create_from_region(self, region):
         """
@@ -91,7 +92,7 @@ class NegRegion():
         """
 
         # Step 1: find visible facets of the positive region
-        
+
         visible_facets = []
         for facet in region.facets:
             if facet.is_visible(self.neg_sample):
@@ -129,8 +130,18 @@ class NegRegion():
         logging.debug("Pos vertices in create_from_region: ")
         logging.debug(str(self.pos_vertices))
 
-        self._create_from_points()
-        
+        if self.pos_vertices.shape[0] == self.dim:
+            self._create_from_points()
+        else:
+            # If we have more than dim positive vertices, create the area from
+            # dim points and add the others.
+            self.pos_vertices_to_add = self.pos_vertices[self.dim:]
+
+            self.pos_vertices = self.pos_vertices[:self.dim]
+            self._create_from_points()
+
+            for sample_id in range(self.pos_vertices_to_add.shape[0]):
+                self.add_vertex(self.pos_vertices_to_add[sample_id])
 
     def contain(self, point):
         """
@@ -167,7 +178,7 @@ class NegRegion():
 
         # If there is no visible facets or no invisible facets, the point does
         # not bring new information
-        if ((not invisible_facets) or 
+        if ((not invisible_facets) or
                 (len(invisible_facets) == len(self.facets))):
             return None
 
@@ -176,8 +187,8 @@ class NegRegion():
             if not facet.is_visible(point):
                 invisible_facets.append(facet)
 
-        logging.debug(" POWPOWPOW 2 Invisible_facets: %s" % (invisible_facets,))
-
+        logging.debug(" POWPOWPOW 2 Invisible_facets: %s"
+                      % (invisible_facets,))
 
         # Step 2: find ridges that connect a visible facet and a hidden facet.
         # They are also the ridges that only occurs once in the set of
@@ -253,4 +264,3 @@ class NegRegion():
                 to_remove.append(vertex_id)
 
         self.pos_vertices = np.delete(self.pos_vertices, to_remove, 0)
-
