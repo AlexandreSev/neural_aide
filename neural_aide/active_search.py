@@ -155,6 +155,7 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                                             n_epoch=100000, display_step=100,
                                             stop_at_1=True, saving=False)
 
+                callback["samples"] = samples
                 # Initialize tsm
                 if tsm:
                     tsm_object = threesetsmanager.ThreeSetsManager(
@@ -405,7 +406,7 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
 
                 logging.info("Saving Callback")
                 # Complete the callback
-                callback["samples"] = samples
+                callback["samples"].append(sample)
 
                 # Save the callback
                 if callback_save_path is not None:

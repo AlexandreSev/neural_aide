@@ -69,7 +69,7 @@ class Facet():
         Return:
             (boolean): True if the point is visible
         """
-        return (self.coefs.dot(point.reshape((-1, 1))) + self.offset > 0)
+        return (self.coefs.dot(point.reshape((-1, 1))) + self.offset >= 0)
 
     def get_ridges(self):
         """
