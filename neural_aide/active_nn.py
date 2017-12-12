@@ -53,7 +53,7 @@ class ActiveNeuralNetwork:
     """
 
     def __init__(self, input_shape=2, hidden_shapes=[64, 1],
-                 loss="binary_crossentropy", batch_size=64,
+                 loss="binary_crossentropy", batch_size=50000,
                  first_fully_connected_input_shape=3136, include_small=False,
                  learning_rate=0.001):
         """
