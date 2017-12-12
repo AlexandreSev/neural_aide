@@ -3,7 +3,7 @@
 
 import logging
 import numpy as np
-
+import time
 
 def kmin(l1, l2, k):
     """
@@ -39,7 +39,7 @@ def kmin(l1, l2, k):
     return results
 
 
-def find_k_most_uncertain(nn, sess, X, batch_size=128, k=2,
+def find_k_most_uncertain(nn, sess, X, batch_size=None, k=2,
                           pool_size=None):
     """
     Find the most uncertain sample for a neural network in a database.
@@ -60,18 +60,26 @@ def find_k_most_uncertain(nn, sess, X, batch_size=128, k=2,
     results = []
     i = -1
 
+    if batch_size is None:
+        _batch_size = X.shape[0]
+    else:
+        _batch_size = batch_size
+
     # Create the pool
-    X_pool = X.copy()
-    order = np.arange(X_pool.shape[0])
+    order = np.arange(X.shape[0])
+
     if pool_size is not None:
         np.random.shuffle(order)
-        X_pool = X_pool[order[:min(X_pool.shape[0], pool_size)], :]
+        X_pool = X[order[:min(X.shape[0], pool_size)], :].copy()
+    else:
+        X_pool = X.copy()
 
     # Loop over the batches
-    for i in range(X_pool.shape[0]/batch_size):
+    for i in range(X_pool.shape[0]/_batch_size):
 
         feed_dict = {}
-        feed_dict[nn.input_tensor] = X_pool[i * batch_size: (i+1) * batch_size]
+        feed_dict[nn.input_tensor] = X_pool[i * _batch_size:
+                                            (i+1) * _batch_size]
 
         # Predict the batch
         pred = sess.run(nn.prediction, feed_dict=feed_dict)
@@ -84,14 +92,14 @@ def find_k_most_uncertain(nn, sess, X, batch_size=128, k=2,
         pred = pred[batch_order]
 
         # Create associated indices
-        to_zip = order[range(i * batch_size, i * batch_size + pred.shape[0])]
+        to_zip = order[range(i * _batch_size, i * _batch_size + pred.shape[0])]
         to_zip = to_zip[batch_order]
 
         results = kmin(results, zip(pred, to_zip), k)
 
     # Last uncomplete batch
     feed_dict = {}
-    feed_dict[nn.input_tensor] = X_pool[(i+1) * batch_size:]
+    feed_dict[nn.input_tensor] = X_pool[(i+1) * _batch_size:]
 
     # Predict the last batch
     pred = sess.run(nn.prediction, feed_dict=feed_dict)
@@ -102,8 +110,8 @@ def find_k_most_uncertain(nn, sess, X, batch_size=128, k=2,
     pred = pred[batch_order]
 
     # Create associated indices
-    to_zip = order[range((i+1) * batch_size,
-                   (i + 1) * batch_size + pred.shape[0])]
+    to_zip = order[range((i + 1) * _batch_size,
+                   (i + 1) * _batch_size + pred.shape[0])]
     to_zip = to_zip[batch_order]
 
     results = kmin(results, zip(pred, to_zip), k)

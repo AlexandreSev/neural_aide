@@ -59,7 +59,7 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
                              nb_biased_epoch=2000, use_main_weights=False,
                              display=False, save_plot=False, query=1,
                              biased_lr=0.001, tsm=False, pltlim=True,
-                             tsm_lim=None, reduce_factor=None):
+                             tsm_lim=None, reduce_factor=None, pool_size=None):
     """
     Run the active search.
     Params:
@@ -96,6 +96,8 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
             be divided by this factor. If None, it will be equal to
             len(biased_sample). If "evolutive", it will be equal to
             len(biased_samples) * 2. / X_train.shape[0].
+        pool_size (integer): Size of the pool considered to find the most
+            uncertain point. If None, the whole X is used.
     """
 
     SAVING_DIRECTORY = pjoin(ressources_folder, "results")
@@ -107,11 +109,12 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
     identifier = "sdss_" + date
     for name, value in zip([
             "qdb", "random", "shapes", "include_background", "evolutive_small",
-            "nb_biased_epoch", "use_main_weights", "query", "tsm",
-            "reduce_factor"
+            "nb_biased_epoch", "use_main_weights", "query", "tsm", "biased_lr",
+            "reduce_factor", "pool_size",
                             ], [
             qdb, random, shapes, include_background, evolutive_small,
-            nb_biased_epoch, use_main_weights, query, tsm, reduce_factor,
+            nb_biased_epoch, use_main_weights, query, tsm, biased_lr,
+            reduce_factor, pool_size
                                ]):
 
         identifier += "_" + name + "_" + str(value)
@@ -128,11 +131,12 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
 
     for name, value in zip([
             "qdb", "random", "shapes", "include_background", "evolutive_small",
-            "nb_biased_epoch", "use_main_weights", "query", "tsm",
-            "reduce_factor"
+            "nb_biased_epoch", "use_main_weights", "query", "tsm", "biased_lr",
+            "reduce_factor", "pool_size",
                             ], [
             qdb, random, shapes, include_background, evolutive_small,
-            nb_biased_epoch, use_main_weights, query, tsm, reduce_factor,
+            nb_biased_epoch, use_main_weights, query, tsm, biased_lr,
+            reduce_factor, pool_size
                                ]):
         logging.info("%s: %s" % (name, value))
 
@@ -200,7 +204,7 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
             include_background=include_background,
             evolutive_small=evolutive_small, nb_biased_epoch=nb_biased_epoch,
             biased_lr=biased_lr, tsm=tsm, tsm_lim=tsm_lim,
-            reduce_factor=reduce_factor,
+            reduce_factor=reduce_factor, pool_size=pool_size,
         )
     else:
         neural_aide.active_search.active_search(
@@ -215,7 +219,7 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
             include_background=include_background,
             evolutive_small=evolutive_small, nb_biased_epoch=nb_biased_epoch,
             biased_lr=biased_lr, tsm=tsm, tsm_lim=tsm_lim,
-            reduce_factor=reduce_factor,
+            reduce_factor=reduce_factor, pool_size=pool_size,
         )
 
 
@@ -224,7 +228,8 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
                                 include_background=True, evolutive_small=True,
                                 nb_biased_epoch=2000, use_main_weights=False,
                                 biased_lr=0.001, tsm=False,
-                                tsm_lim=None, reduce_factor=None):
+                                tsm_lim=None, reduce_factor=None,
+                                pool_size=None):
     """
     Run the active search.
     Params:
@@ -256,6 +261,8 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
             be divided by this factor. If None, it will be equal to
             len(biased_sample). If "evolutive", it will be equal to
             len(biased_samples) * 2. / X_train.shape[0].
+        pool_size (integer): Size of the pool considered to find the most
+            uncertain point. If None, the whole X is used.
     """
 
     SAVING_DIRECTORY = pjoin(ressources_folder, "results")
@@ -267,11 +274,12 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
     identifier = "housing" + date
     for name, value in zip([
             "qdb", "random", "shapes", "include_background", "evolutive_small",
-            "nb_biased_epoch", "use_main_weights", "tsm",
-            "reduce_factor"
+            "nb_biased_epoch", "use_main_weights", "tsm", "biased_lr",
+            "reduce_factor", "pool_size",
                             ], [
             qdb, random, shapes, include_background, evolutive_small,
-            nb_biased_epoch, use_main_weights, tsm, reduce_factor,
+            nb_biased_epoch, use_main_weights, tsm, biased_lr,
+            reduce_factor, pool_size,
                                ]):
 
         identifier += "_" + name + "_" + str(value)
@@ -288,11 +296,12 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
 
     for name, value in zip([
             "qdb", "random", "shapes", "include_background", "evolutive_small",
-            "nb_biased_epoch", "use_main_weights", "query", "tsm",
-            "reduce_factor"
+            "nb_biased_epoch", "use_main_weights", "tsm", "biased_lr",
+            "reduce_factor", "pool_size",
                             ], [
             qdb, random, shapes, include_background, evolutive_small,
-            nb_biased_epoch, use_main_weights, query, tsm, reduce_factor,
+            nb_biased_epoch, use_main_weights, tsm, biased_lr,
+            reduce_factor, pool_size,
                                ]):
         logging.info("%s: %s" % (name, value))
 

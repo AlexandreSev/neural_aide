@@ -28,7 +28,7 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                   save_biased=True, include_background=False,
                   evolutive_small=False, nb_biased_epoch=10000,
                   biased_lr=0.001, tsm=False, tsm_lim=None,
-                  reduce_factor=None):
+                  reduce_factor=None, pool_size=None):
     """
     Run the Query by disagreement search with neural networks.
     Params:
@@ -69,6 +69,8 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
             be divided by this factor. If None, it will be equal to
             len(biased_sample). If "evolutive", it will be equal to
             len(biased_samples) * 2. / X_train.shape[0].
+        pool_size (integer): Size of the pool considered to find the most
+            uncertain point. If None, the whole X is used.
     """
 
     # Initialize variables
@@ -201,7 +203,8 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                                          random=random, save=save_biased,
                                          evolutive_small=evolutive_small,
                                          nb_biased_epoch=nb_biased_epoch,
-                                         reduce_factor=reduce_factor)
+                                         reduce_factor=reduce_factor,
+                                         pool_size=pool_size)
                             )
 
                         for i, key in enumerate([
@@ -211,7 +214,8 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                             timer[key].append(times[i])
                     else:
                         sample = uncertainty_sampling(nn_main, sess_main,
-                                                      X_val)
+                                                      X_val,
+                                                      pool_size=pool_size)
 
                     if (tsm and
                             (tsm_object.get_label(X_val[sample]) is not None)):
