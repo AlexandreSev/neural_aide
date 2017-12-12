@@ -102,8 +102,9 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
 
     # Create unique identifier
     date = str(datetime.datetime.now())
+    date = date.replace("-", "_").replace(" ", "_").replace(":", "_")
 
-    identifier = "sdss" + date
+    identifier = "sdss_" + date
     for name, value in zip([
             "qdb", "random", "shapes", "include_background", "evolutive_small",
             "nb_biased_epoch", "use_main_weights", "query", "tsm",
@@ -124,6 +125,16 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
     reload(logging)
     log_file = (pjoin(SAVING_DIRECTORY, "log.log"))
     logger_utils.initialize_logger(log_file, filemode="w")
+
+    for name, value in zip([
+            "qdb", "random", "shapes", "include_background", "evolutive_small",
+            "nb_biased_epoch", "use_main_weights", "query", "tsm",
+            "reduce_factor"
+                            ], [
+            qdb, random, shapes, include_background, evolutive_small,
+            nb_biased_epoch, use_main_weights, query, tsm, reduce_factor,
+                               ]):
+        logging.info("%s: %s" % (name, value))
 
     # Load data
     if query == 1:
@@ -251,6 +262,7 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
 
     # Create unique identifier
     date = str(datetime.datetime.now())
+    date = date.replace("-", "_").replace(" ", "_").replace(":", "_")
 
     identifier = "housing" + date
     for name, value in zip([
@@ -273,6 +285,16 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
     reload(logging)
     log_file = (pjoin(SAVING_DIRECTORY, "log.log"))
     logger_utils.initialize_logger(log_file, filemode="w")
+
+    for name, value in zip([
+            "qdb", "random", "shapes", "include_background", "evolutive_small",
+            "nb_biased_epoch", "use_main_weights", "query", "tsm",
+            "reduce_factor"
+                            ], [
+            qdb, random, shapes, include_background, evolutive_small,
+            nb_biased_epoch, use_main_weights, query, tsm, reduce_factor,
+                               ]):
+        logging.info("%s: %s" % (name, value))
 
     # Load data
 

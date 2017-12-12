@@ -66,6 +66,11 @@ def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
             # predict a positive sample
             nb_epoch *= 2
 
+            # Return a error if it takes too long to find one sample of each
+            # label
+            if nb_epoch > first_nb_epoch * 10:
+                raise Exception("The biased model does not converge!")
+
             # Train the neural network
             if repeat:
                 nn.training(sess, np.vstack((X_train, X_val[biased_samples])),

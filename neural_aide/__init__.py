@@ -5,3 +5,5 @@ import threesetsmetric
 import sampling
 import qdbsampling
 import callbacktreatment
+import adaptative_search
+import adaptative_nn
