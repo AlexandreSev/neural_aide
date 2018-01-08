@@ -69,8 +69,10 @@ def find_k_most_uncertain(nn, sess, X, batch_size=None, k=2,
     order = np.arange(X.shape[0])
 
     if pool_size is not None:
-        np.random.shuffle(order)
-        X_pool = X[order[:min(X.shape[0], pool_size)], :].copy()
+        order = np.random.choice(X.shape[0], 
+                                 min(X.shape[0], pool_size),
+                                 replace=False)
+        X_pool = X[order, :].copy()
     else:
         X_pool = X.copy()
 
@@ -110,8 +112,7 @@ def find_k_most_uncertain(nn, sess, X, batch_size=None, k=2,
     pred = pred[batch_order]
 
     # Create associated indices
-    to_zip = order[range((i + 1) * _batch_size,
-                   (i + 1) * _batch_size + pred.shape[0])]
+    to_zip = order[(i + 1) * _batch_size:]
     to_zip = to_zip[batch_order]
 
     results = kmin(results, zip(pred, to_zip), k)

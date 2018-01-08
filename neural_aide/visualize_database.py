@@ -98,14 +98,42 @@ def plot_advancement_uncertainty_search(X_train, y_train, X_val, y_val,
     """
     colors = ["red", "green"]
 
+    # If xlim/ylim is not, find the region of interest:
+    if xlim is None:
+        xlow = np.min(X_val[y_val.reshape(-1) > 0.5, 0]),
+                    
+        xup = np.max(X_val[y_val.reshape(-1) > 0.5, 0]),     
+
+        if np.where(X_val, old_pred.reshape(-1) > 0.5):
+            xlow = min(xlow, np.min(X_val[old_pred.reshape(-1) > 0.5, 0]))
+            xup = max(xup, np.max(X_val[old_pred.reshape(-1) > 0.5, 0]))
+
+        if np.where(X_val, new_pred.reshape(-1) > 0.5):
+            xlow = min(xlow, np.min(X_val[new_pred.reshape(-1) > 0.5, 0]))
+            xup = max(xup, np.max(X_val[new_pred.reshape(-1) > 0.5, 0]))
+
+        xlim = (xlow, xup)
+
+    if ylim is None:
+        ylow = np.min(X_val[y_val.reshape(-1) > 0.5, 1])
+        yup = np.max(X_val[y_val.reshape(-1) > 0.5, 1]),     
+
+        if np.where(X_val, old_pred.reshape(-1) > 0.5):
+            ylow = min(ylow, np.min(X_val[old_pred.reshape(-1) > 0.5, 1]))
+            yup = max(yup, np.max(X_val[old_pred.reshape(-1) > 0.5, 1]))
+
+        if np.where(X_val, new_pred.reshape(-1) > 0.5):
+            ylow = min(ylow, np.min(X_val[new_pred.reshape(-1) > 0.5, 1]))
+            yup = max(yup, np.max(X_val[new_pred.reshape(-1) > 0.5, 1]))
+            
+        ylim = (ylow, yup)
+
     plt.figure(1)
     # Plot the old predictions with uncertain points
     plt.subplot(131)
 
-    if xlim is not None:
-        plt.xlim(xlim)
-    if ylim is not None:
-        plt.ylim(ylim)
+    plt.xlim(xlim)
+    plt.ylim(ylim)
 
     plt.scatter(X_val[:, 0], X_val[:, 1],
                 c=[colors[int(j > 0.5)] for j in old_pred])
@@ -117,10 +145,8 @@ def plot_advancement_uncertainty_search(X_train, y_train, X_val, y_val,
 
     plt.subplot(132)
 
-    if xlim is not None:
-        plt.xlim(xlim)
-    if ylim is not None:
-        plt.ylim(ylim)
+    plt.xlim(xlim)
+    plt.ylim(ylim)
 
     plt.scatter(X_val[:, 0], X_val[:, 1],
                 c=[colors[int(j > 0.5)] for j in new_pred])
@@ -132,10 +158,8 @@ def plot_advancement_uncertainty_search(X_train, y_train, X_val, y_val,
 
     plt.subplot(133)
 
-    if xlim is not None:
-        plt.xlim(xlim)
-    if ylim is not None:
-        plt.ylim(ylim)
+    plt.xlim(xlim)
+    plt.ylim(ylim)
 
     plt.scatter(X_val[:, 0], X_val[:, 1],
                 c=[colors[int(k)] for k in y_val.reshape(-1)])
@@ -227,14 +251,62 @@ def plot_advancement_qdb_search(X_train, y_train, X_val, y_val, old_pred,
     colors = ["red", "green"]
     colors_others = ["red", "yellow", "green"]
 
+    # If xlim/ylim is not, find the region of interest:
+    if xlim is None:
+        xlow = min((np.min(X_val[y_val.reshape(-1) > 0.5, 0]),
+                    np.min(X_val[(
+                        (pred_pos.reshape(-1) > 0.5) +
+                        (pred_neg.reshape(-1) > 0.5)
+                        ) == 1, 0]),
+                    ))
+
+        xup = max((np.max(X_val[y_val.reshape(-1) > 0.5, 0]),
+                   np.max(X_val[(
+                        (pred_pos.reshape(-1) > 0.5) +
+                        (pred_neg.reshape(-1) > 0.5)
+                        ) == 1, 0]),
+                    ))
+
+        if np.where(X_val, old_pred.reshape(-1) > 0.5):
+            xlow = min(xlow, np.min(X_val[old_pred.reshape(-1) > 0.5, 0]))
+            xup = max(xup, np.max(X_val[old_pred.reshape(-1) > 0.5, 0]))
+
+        if np.where(X_val, new_pred.reshape(-1) > 0.5):
+            xlow = min(xlow, np.min(X_val[new_pred.reshape(-1) > 0.5, 0]))
+            xup = max(xup, np.max(X_val[new_pred.reshape(-1) > 0.5, 0]))
+
+        xlim = (0.95 * xlow, 1.05 * xup)
+
+    if ylim is None:
+        ylow = min((np.min(X_val[y_val.reshape(-1) > 0.5, 1]),
+                    np.min(X_val[(
+                        (pred_pos.reshape(-1) > 0.5) +
+                        (pred_neg.reshape(-1) > 0.5)
+                        ) == 1, 1]),
+                    ))
+        yup = max((np.max(X_val[y_val.reshape(-1) > 0.5, 1]),
+                   np.max(X_val[(
+                        (pred_pos.reshape(-1) > 0.5) +
+                        (pred_neg.reshape(-1) > 0.5)
+                        ) == 1, 1]),
+                    ))
+
+        if np.where(X_val, old_pred.reshape(-1) > 0.5):
+            ylow = min(ylow, np.min(X_val[old_pred.reshape(-1) > 0.5, 1]))
+            yup = max(yup, np.max(X_val[old_pred.reshape(-1) > 0.5, 1]))
+
+        if np.where(X_val, new_pred.reshape(-1) > 0.5):
+            ylow = min(ylow, np.min(X_val[new_pred.reshape(-1) > 0.5, 1]))
+            yup = max(yup, np.max(X_val[new_pred.reshape(-1) > 0.5, 1]))
+            
+        ylim = (0.95 * ylow, 1.05 * yup)
+
     plt.figure(1)
     # Plot the old predictions with uncertain points
     plt.subplot(141)
 
-    if xlim is not None:
-        plt.xlim(xlim)
-    if ylim is not None:
-        plt.ylim(ylim)
+    plt.xlim(xlim)
+    plt.ylim(ylim)
 
     plt.scatter(X_val[:, 0], X_val[:, 1],
                 c=[colors[int(j > 0.5)] for j in old_pred])
@@ -249,10 +321,8 @@ def plot_advancement_qdb_search(X_train, y_train, X_val, y_val, old_pred,
     # Plot the biased prediction
     plt.subplot(142)
 
-    if xlim is not None:
-        plt.xlim(xlim)
-    if ylim is not None:
-        plt.ylim(ylim)
+    plt.xlim(xlim)
+    plt.ylim(ylim)
 
     plt.scatter(X_val[:, 0], X_val[:, 1],
                 c=[colors_others[int(k > 0.5) + int(j > 0.5)]
@@ -265,10 +335,8 @@ def plot_advancement_qdb_search(X_train, y_train, X_val, y_val, old_pred,
     # Plot the new prediction
     plt.subplot(143)
 
-    if xlim is not None:
-        plt.xlim(xlim)
-    if ylim is not None:
-        plt.ylim(ylim)
+    plt.xlim(xlim)
+    plt.ylim(ylim)
 
     plt.scatter(X_val[:, 0], X_val[:, 1],
                 c=[colors[int(j > 0.5)] for j in new_pred])
@@ -280,10 +348,8 @@ def plot_advancement_qdb_search(X_train, y_train, X_val, y_val, old_pred,
     # Plot the ground truth
     plt.subplot(144)
 
-    if xlim is not None:
-        plt.xlim(xlim)
-    if ylim is not None:
-        plt.ylim(ylim)
+    plt.xlim(xlim)
+    plt.ylim(ylim)
 
     plt.scatter(X_val[:, 0], X_val[:, 1],
                 c=[colors[int(k)] for k in y_val.reshape(-1)])
@@ -329,16 +395,62 @@ def random_advancement_plot(X_train, y_train, X_val, y_val, old_pred, new_pred,
             or ((ylim is None) and (xlim is not None))):
         raise Exception("Not implemented yet !")
 
-    if xlim is not None:
-        availablelity_filter = (
-            (X_val[:, 0] > xlim[0])
-            * (X_val[:, 0] < xlim[1])
-            * (X_val[:, 1] > ylim[0])
-            * (X_val[:, 1] < ylim[1])
-            )
-        available_points = np.where(availablelity_filter == 1)[0]
-    else:
-        available_points = np.ones(y_val.shape[0]).astype(bool)
+    if xlim is None:
+        xlow = min((np.min(X_val[y_val.reshape(-1) > 0.5, 0]),
+                    np.min(X_val[(
+                        (pred_pos.reshape(-1) > 0.5) +
+                        (pred_neg.reshape(-1) > 0.5)
+                        ) == 1, 0]),
+                    ))
+
+        xup = max((np.max(X_val[y_val.reshape(-1) > 0.5, 0]),
+                   np.max(X_val[(
+                        (pred_pos.reshape(-1) > 0.5) +
+                        (pred_neg.reshape(-1) > 0.5)
+                        ) == 1, 0]),
+                    ))
+
+        if np.sum(old_pred.reshape(-1) > 0.5):
+            xlow = min(xlow, np.min(X_val[old_pred.reshape(-1) > 0.5, 0]))
+            xup = max(xup, np.max(X_val[old_pred.reshape(-1) > 0.5, 0]))
+
+        if np.sum(new_pred.reshape(-1) > 0.5):
+            xlow = min(xlow, np.min(X_val[new_pred.reshape(-1) > 0.5, 0]))
+            xup = max(xup, np.max(X_val[new_pred.reshape(-1) > 0.5, 0]))
+
+        xlim = (0.95 * xlow, 1.05 * xup)
+
+    if ylim is None:
+        ylow = min((np.min(X_val[y_val.reshape(-1) > 0.5, 1]),
+                    np.min(X_val[(
+                        (pred_pos.reshape(-1) > 0.5) +
+                        (pred_neg.reshape(-1) > 0.5)
+                        ) == 1, 1]),
+                    ))
+        yup = max((np.max(X_val[y_val.reshape(-1) > 0.5, 1]),
+                   np.max(X_val[(
+                        (pred_pos.reshape(-1) > 0.5) +
+                        (pred_neg.reshape(-1) > 0.5)
+                        ) == 1, 1]),
+                    ))
+
+        if np.sum(old_pred.reshape(-1) > 0.5):
+            ylow = min(ylow, np.min(X_val[old_pred.reshape(-1) > 0.5, 1]))
+            yup = max(yup, np.max(X_val[old_pred.reshape(-1) > 0.5, 1]))
+
+        if np.sum(new_pred.reshape(-1) > 0.5):
+            ylow = min(ylow, np.min(X_val[new_pred.reshape(-1) > 0.5, 1]))
+            yup = max(yup, np.max(X_val[new_pred.reshape(-1) > 0.5, 1]))
+            
+        ylim = (0.95 * ylow, 1.05 * yup)
+
+    availablelity_filter = (
+        (X_val[:, 0] > xlim[0])
+        * (X_val[:, 0] < xlim[1])
+        * (X_val[:, 1] > ylim[0])
+        * (X_val[:, 1] < ylim[1])
+        )
+    available_points = np.where(availablelity_filter == 1)[0]
 
     order = np.arange(y_val[available_points].shape[0])
     np.random.shuffle(order)

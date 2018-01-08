@@ -59,7 +59,8 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
                              nb_biased_epoch=2000, use_main_weights=False,
                              display=False, save_plot=False, query=1,
                              biased_lr=0.001, tsm=False, pltlim=True,
-                             tsm_lim=None, reduce_factor=None, pool_size=None):
+                             tsm_lim=None, reduce_factor=None, pool_size=None,
+                             np_seed=None, tf_seed=None):
     """
     Run the active search.
     Params:
@@ -98,6 +99,8 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
             len(biased_samples) * 2. / X_train.shape[0].
         pool_size (integer): Size of the pool considered to find the most
             uncertain point. If None, the whole X is used.
+        np_seed (int): Seed used by numpy. Can be None.
+        tf_seed (int): Seed used by tensorflow. Can be None.
     """
 
     SAVING_DIRECTORY = pjoin(ressources_folder, "results")
@@ -128,6 +131,21 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
     reload(logging)
     log_file = (pjoin(SAVING_DIRECTORY, "log.log"))
     logger_utils.initialize_logger(log_file, filemode="w")
+
+    # Fix the seeds
+    if np_seed is None:
+        seed = np.random.randint(1000)
+    else:
+        seed = np_seed
+    np.random.seed(seed)
+    logging.info("Numpy seed: %s" % seed)
+
+    if tf_seed is None:
+        seed = np.random.randint(1000)
+    else:
+        seed = np_seed
+    tf.set_random_seed(seed)
+    logging.info("Tensorflow seed: %s" % seed)
 
     for name, value in zip([
             "qdb", "random", "shapes", "include_background", "evolutive_small",
@@ -229,7 +247,8 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
                                 nb_biased_epoch=2000, use_main_weights=False,
                                 biased_lr=0.001, tsm=False,
                                 tsm_lim=None, reduce_factor=None,
-                                pool_size=None):
+                                pool_size=None, khaled=False, np_seed=None,
+                                tf_seed=None):
     """
     Run the active search.
     Params:
@@ -263,6 +282,10 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
             len(biased_samples) * 2. / X_train.shape[0].
         pool_size (integer): Size of the pool considered to find the most
             uncertain point. If None, the whole X is used.
+        khaled (boolean): Decide if the nn is trained with alex' or khaled's
+            labels.
+        np_seed (int): Seed used by numpy. Can be None.
+        tf_seed (int): Seed used by tensorflow. Can be None.
     """
 
     SAVING_DIRECTORY = pjoin(ressources_folder, "results")
@@ -294,6 +317,21 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
     log_file = (pjoin(SAVING_DIRECTORY, "log.log"))
     logger_utils.initialize_logger(log_file, filemode="w")
 
+    # Fix the seeds
+    if np_seed is None:
+        seed = np.random.randint(1000)
+    else:
+        seed = np_seed
+    np.random.seed(seed)
+    logging.info("Seed: %s" % seed)
+
+    if tf_seed is None:
+        seed = np.random.randint(1000)
+    else:
+        seed = np_seed
+    tf.set_random_seed(seed)
+    logging.info("Tensorflow seed: %s" % seed)
+
     for name, value in zip([
             "qdb", "random", "shapes", "include_background", "evolutive_small",
             "nb_biased_epoch", "use_main_weights", "tsm", "biased_lr",
@@ -319,9 +357,16 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
     X = neural_aide.utils_database.normalize_npy_database(data)
 
     # Creation of the labels
-    with open(pjoin(ressources_folder, "ressources", "housing_dataset",
-                    "alex_labels.json"), "r") as fp:
-        y = np.array(json.load(fp)).reshape((-1, 1))
+    if khaled:
+        logging.info("Train on Khaled' labels")
+        with open(pjoin(ressources_folder, "ressources", "housing_dataset",
+                        "khaled_labels.json"), "r") as fp:
+            y = np.array(json.load(fp)).reshape((-1, 1))
+    else:
+        logging.info("Train on Alex' labels")
+        with open(pjoin(ressources_folder, "ressources", "housing_dataset",
+                        "alex_labels.json"), "r") as fp:
+            y = np.array(json.load(fp)).reshape((-1, 1))
 
     logging.info("Selectivity of the query: %s" % np.mean(y))
 

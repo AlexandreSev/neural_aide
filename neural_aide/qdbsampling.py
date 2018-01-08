@@ -107,7 +107,8 @@ def qdb_sampling(nn_main, sess_main, X_train, y_train, X_val, y_val, iteration,
                  nn_pos, graph_pos, pos_weights_path, nn_neg, graph_neg,
                  neg_weights_path, random=False, save=True,
                  evolutive_small=False, nb_biased_epoch=10000,
-                 reduce_factor=None, pool_size=None):
+                 reduce_factor=None, pool_size=None,
+                 background_sampling="uncertain"):
     """
     Find the next sample with query by disagreement.
     Params:
@@ -136,6 +137,9 @@ def qdb_sampling(nn_main, sess_main, X_train, y_train, X_val, y_val, iteration,
             len(biased_samples) * 2. / X_train.shape[0].
         pool_size (integer): Size of the pool considered to find the most
             uncertain point. If None, the whole X is used.
+        background_sampling (string). If "uncertain", background points will be
+            the most uncertain of the model. If "random", background points
+            will be randomly sampled.
 
     Return:
         (integer) indice of the new sample
@@ -146,13 +150,18 @@ def qdb_sampling(nn_main, sess_main, X_train, y_train, X_val, y_val, iteration,
 
     # Find background points
     t0 = time.time()
+    
     if evolutive_small:
-        biased_samples = find_k_most_uncertain(nn_main, sess_main, X_val,
-                                               k=2*iteration,
-                                               pool_size=pool_size)
+        k = 2 * iteration
     else:
+        k = 200
+
+    if background_sampling == "uncertain":
         biased_samples = find_k_most_uncertain(nn_main, sess_main, X_val,
-                                               k=200, pool_size=pool_size)
+                                               k=k, pool_size=pool_size)
+    elif background_sampling == "random":
+        biased_samples = np.random.choice(X_val.shape[0], k, replace=False)
+
 
     t1 = time.time()
     # Training of biased nn.
