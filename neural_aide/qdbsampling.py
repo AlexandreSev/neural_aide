@@ -39,7 +39,7 @@ def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
     """
     with tf.Session(graph=graph) as sess:
 
-        nb_epoch = first_nb_epoch/2
+        nb_epoch = first_nb_epoch
 
         # Initialize weights and load previous one if they exist
         sess.run(tf.global_variables_initializer())
@@ -51,51 +51,33 @@ def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
         else:
             y_small = np.zeros((len(biased_samples), 1))
 
-        criterion = True
-        repeat = False
+
         if reduce_factor is None:
             _reduce_factor = len(biased_samples)
         elif reduce_factor == "evolutive":
             _reduce_factor = len(biased_samples) * 2. / X_train.shape[0]
         else:
             _reduce_factor = reduce_factor
-        # Loop while it does not predict a postive sample
-        while criterion:
 
-            # Train the neural network longer when it does not
-            # predict a positive sample
-            nb_epoch *= 2
+        # Train the neural network
+        nn.training(sess, X_train,
+                    y_train, X_small=X_val[biased_samples],
+                    y_small=y_small, n_epoch=nb_epoch,
+                    display_step=100000, stop_at_1=True,
+                    saving=False, callback=True,
+                    nb_min_epoch=min_biased_epoch,
+                    reduce_factor=_reduce_factor)
 
-            # Return a error if it takes too long to find one sample of each
-            # label
-            if nb_epoch > first_nb_epoch * 10:
-                raise Exception("The biased model does not converge!")
+        # Predict the whole database
+        pred = sess.run(nn.prediction,
+                        feed_dict={nn.input_tensor: X_val})
 
-            # Train the neural network
-            if repeat:
-                nn.training(sess, np.vstack((X_train, X_val[biased_samples])),
-                            np.vstack((y_train, y_small)), n_epoch=nb_epoch,
-                            display_step=100000, stop_at_1=True,
-                            saving=False, callback=True,
-                            nb_min_epoch=min_biased_epoch,
-                            reduce_factor=_reduce_factor)
-            else:
-                nn.training(sess, X_train,
-                            y_train, X_small=X_val[biased_samples],
-                            y_small=y_small, n_epoch=nb_epoch,
-                            display_step=100000, stop_at_1=True,
-                            saving=False, callback=True,
-                            nb_min_epoch=min_biased_epoch,
-                            reduce_factor=_reduce_factor)
-
-            # Predict the whole database
-            pred = sess.run(nn.prediction,
-                            feed_dict={nn.input_tensor: X_val})
-
-            if positive:
-                criterion = (np.sum(pred > 0.5) == 0)
-            else:
-                criterion = (np.sum(pred <= 0.5) == 0)
+        if (positive and (np.sum(pred > 0.5) == 0)):
+            pred += (0.51 - max(pred))
+            logging.debug("any True sample found") 
+        elif ((not positive) and (np.sum(pred <= 0.5) == 0)):
+            pred += (0.49 - min(pred))
+            logging.debug("any False sample found") 
 
         # Save the weights for the next iteration
         if save:
