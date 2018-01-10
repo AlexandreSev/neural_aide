@@ -60,7 +60,7 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
                              display=False, save_plot=False, query=1,
                              biased_lr=0.001, tsm=False, pltlim=True,
                              tsm_lim=None, reduce_factor=None, pool_size=None,
-                             np_seed=None, tf_seed=None):
+                             np_seed=None, tf_seed=None, saving_dir=None):
     """
     Run the active search.
     Params:
@@ -101,9 +101,14 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
             uncertain point. If None, the whole X is used.
         np_seed (int): Seed used by numpy. Can be None.
         tf_seed (int): Seed used by tensorflow. Can be None.
+        saving_dir (string): where to save the results. If None, it will
+            be in ressources_folder/results.
     """
 
-    SAVING_DIRECTORY = pjoin(ressources_folder, "results")
+    if saving_dir is None:
+        SAVING_DIRECTORY = pjoin(ressources_folder, "results")
+    else:
+        SAVING_DIRECTORY = saving_dir
 
     # Create unique identifier
     date = str(datetime.datetime.now())
