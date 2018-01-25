@@ -51,11 +51,11 @@ for i in range(10):
             pool_size=POOL_SIZE,
             np_seed=i+100,
             tf_seed=i,
-            saving_dir=pjoin(RESSOURCES_FOLDER, "results", "evolutive"),
+            saving_dir=pjoin(RESSOURCES_FOLDER, "results", "a1_2_random"),
             main_lr=MAIN_LR,
             nn_activation=ACTIVATION,
             nn_loss=LOSS,
-            backgorund_sampling=BACKGROUND_SAMPLING
+            background_sampling=BACKGROUND_SAMPLING
             )
     except Exception as e:
         logging.exception("Here is the error")

@@ -50,7 +50,7 @@ for i in range(10):
             pool_size=POOL_SIZE,
             np_seed=i+100,
             tf_seed=i,
-            saving_dir=pjoin(RESSOURCES_FOLDER, "results", "a1_2_none"),
+            saving_dir=pjoin(RESSOURCES_FOLDER, "results", "a2_2_none"),
             main_lr=MAIN_LR,
             nn_activation=ACTIVATION,
             nn_loss=LOSS

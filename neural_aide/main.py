@@ -62,7 +62,7 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
                              tsm_lim=None, reduce_factor=None, pool_size=None,
                              np_seed=None, tf_seed=None, saving_dir=None,
                              main_lr=0.001, nn_activation="relu",
-                             loss="binary_crossentropy",
+                             nn_loss="binary_crossentropy",
                              background_sampling="uncertain",):
     """
     Run the active search.

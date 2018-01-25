@@ -106,8 +106,7 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
     with graph_main.as_default():
         nn_main = ActiveNeuralNetwork(
             input_shape=input_shape, hidden_shapes=shapes, batch_size=124,
-            loss="binary_crossentropy", learning_rate=main_lr,
-            activation=nn_activation, loss=nn_loss,
+            learning_rate=main_lr, activation=nn_activation, loss=nn_loss,
             )
     if qdb:
         graph_pos = tf.Graph()
@@ -116,16 +115,14 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
         with graph_pos.as_default():
             nn_pos = ActiveNeuralNetwork(
                 input_shape=input_shape, hidden_shapes=shapes, batch_size=124,
-                loss="binary_crossentropy", include_small=include_background,
+                include_small=include_background, loss=nn_loss,
                 learning_rate=biased_lr, activation=nn_activation,
-                loss=nn_loss,
                 )
         with graph_neg.as_default():
             nn_neg = ActiveNeuralNetwork(
                 input_shape=input_shape, hidden_shapes=shapes, batch_size=124,
-                loss="binary_crossentropy", include_small=include_background,
+                loss=nn_loss, include_small=include_background,
                 learning_rate=biased_lr, activation=nn_activation,
-                loss=nn_loss,
                 )
 
     with tf.Session(graph=graph_main) as sess_main:
