@@ -112,7 +112,8 @@ def plot_advancement_uncertainty_search(X_train, y_train, X_val, y_val,
             xlow = min(xlow, np.min(X_val[new_pred.reshape(-1) > 0.5, 0]))
             xup = max(xup, np.max(X_val[new_pred.reshape(-1) > 0.5, 0]))
 
-        xlim = (xlow, xup)
+        delta = xup - xlow
+        xlim = (xlow - delta / 20, xup + delta / 20)
 
     if ylim is None:
         ylow = np.min(X_val[y_val.reshape(-1) > 0.5, 1])
@@ -126,7 +127,8 @@ def plot_advancement_uncertainty_search(X_train, y_train, X_val, y_val,
             ylow = min(ylow, np.min(X_val[new_pred.reshape(-1) > 0.5, 1]))
             yup = max(yup, np.max(X_val[new_pred.reshape(-1) > 0.5, 1]))
             
-        ylim = (ylow, yup)
+        delta = yup - ylow
+        ylim = (ylow - delta / 20, yup + delta / 20)
 
     plt.figure(1)
     # Plot the old predictions with uncertain points
@@ -275,7 +277,8 @@ def plot_advancement_qdb_search(X_train, y_train, X_val, y_val, old_pred,
             xlow = min(xlow, np.min(X_val[new_pred.reshape(-1) > 0.5, 0]))
             xup = max(xup, np.max(X_val[new_pred.reshape(-1) > 0.5, 0]))
 
-        xlim = (0.95 * xlow, 1.05 * xup)
+        delta = xup - xlow
+        xlim = (xlow - delta / 20, xup + delta / 20)
 
     if ylim is None:
         ylow = min((np.min(X_val[y_val.reshape(-1) > 0.5, 1]),
@@ -299,7 +302,8 @@ def plot_advancement_qdb_search(X_train, y_train, X_val, y_val, old_pred,
             ylow = min(ylow, np.min(X_val[new_pred.reshape(-1) > 0.5, 1]))
             yup = max(yup, np.max(X_val[new_pred.reshape(-1) > 0.5, 1]))
             
-        ylim = (0.95 * ylow, 1.05 * yup)
+        delta = yup - ylow
+        ylim = (ylow - delta / 20, yup + delta / 20)
 
     plt.figure(1)
     # Plot the old predictions with uncertain points
@@ -418,7 +422,8 @@ def random_advancement_plot(X_train, y_train, X_val, y_val, old_pred, new_pred,
             xlow = min(xlow, np.min(X_val[new_pred.reshape(-1) > 0.5, 0]))
             xup = max(xup, np.max(X_val[new_pred.reshape(-1) > 0.5, 0]))
 
-        xlim = (0.95 * xlow, 1.05 * xup)
+        delta = xup - xlow
+        xlim = (xlow - delta / 20, xup + delta / 20)
 
     if ylim is None:
         ylow = min((np.min(X_val[y_val.reshape(-1) > 0.5, 1]),
@@ -442,7 +447,8 @@ def random_advancement_plot(X_train, y_train, X_val, y_val, old_pred, new_pred,
             ylow = min(ylow, np.min(X_val[new_pred.reshape(-1) > 0.5, 1]))
             yup = max(yup, np.max(X_val[new_pred.reshape(-1) > 0.5, 1]))
             
-        ylim = (0.95 * ylow, 1.05 * yup)
+        delta = yup - ylow
+        ylim = (ylow - delta / 20, yup + delta / 20)
 
     availablelity_filter = (
         (X_val[:, 0] > xlim[0])

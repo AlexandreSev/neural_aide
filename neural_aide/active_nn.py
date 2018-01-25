@@ -55,7 +55,7 @@ class ActiveNeuralNetwork:
     def __init__(self, input_shape=2, hidden_shapes=[64, 1],
                  loss="binary_crossentropy", batch_size=50000,
                  first_fully_connected_input_shape=3136, include_small=False,
-                 learning_rate=0.001):
+                 learning_rate=0.001, activation="relu"):
         """
         Args:
             input_shape (int or tuple of int): Shape of the input of the
@@ -70,6 +70,7 @@ class ActiveNeuralNetwork:
             include_small (boolean): If True, include X_small when computing
                 the training score.
             learning_rate (real): learning rate used during the training.
+            activation (string): can be "relu", "tanh", "sigmoid"
         """
 
         self.sizes = [input_shape] + hidden_shapes
@@ -80,6 +81,15 @@ class ActiveNeuralNetwork:
             self.loss_name = loss
         else:
             raise ValueError("Wrong Value for parameter loss")
+
+        if activation == "relu":
+            self.activation = tf.nn.relu
+        elif activation == "tanh":
+            self.activation = tf.tanh
+        elif activation == "sigmoid":
+            self.activation = tf.sigmoid
+        else:
+            raise ValueError("Wrong Value for parameter activation")
 
         self.batch_size = batch_size
 
@@ -174,7 +184,7 @@ class ActiveNeuralNetwork:
             if type(self.sizes[i+1]) == int:
                 # current_input = tf.contrib.layers.flatten(current_input)
 
-                current_input = tf.nn.relu(
+                current_input = self.activation(
                     tf.matmul(
                         current_input,
                         self.params["weights"]["W%s" % i]
@@ -184,7 +194,7 @@ class ActiveNeuralNetwork:
                 self.hidden_representations.append(current_input)
 
             else:
-                current_input = tf.nn.relu(
+                current_input = self.activation(
                     tf.nn.conv2d(
                         current_input,
                         self.params["weights"]["W%s" % i],

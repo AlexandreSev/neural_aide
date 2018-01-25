@@ -60,7 +60,10 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
                              display=False, save_plot=False, query=1,
                              biased_lr=0.001, tsm=False, pltlim=True,
                              tsm_lim=None, reduce_factor=None, pool_size=None,
-                             np_seed=None, tf_seed=None, saving_dir=None):
+                             np_seed=None, tf_seed=None, saving_dir=None,
+                             main_lr=0.001, nn_activation="relu",
+                             loss="binary_crossentropy",
+                             background_sampling="uncertain",):
     """
     Run the active search.
     Params:
@@ -103,6 +106,12 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
         tf_seed (int): Seed used by tensorflow. Can be None.
         saving_dir (string): where to save the results. If None, it will
             be in ressources_folder/results.
+        main_lr (real): learning rate of the main model
+        nn_activation (string): activation function of the neural networks
+        nn_loss (string): loss of the neural networks
+        background_sampling (string). If "uncertain", background points will be
+            the most uncertain of the model. If "random", background points
+            will be randomly sampled.
     """
 
     if saving_dir is None:
@@ -148,7 +157,7 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
     if tf_seed is None:
         seed = np.random.randint(1000)
     else:
-        seed = np_seed
+        seed = tf_seed
     tf.set_random_seed(seed)
     logging.info("Tensorflow seed: %s" % seed)
 
@@ -227,7 +236,9 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
             include_background=include_background,
             evolutive_small=evolutive_small, nb_biased_epoch=nb_biased_epoch,
             biased_lr=biased_lr, tsm=tsm, tsm_lim=tsm_lim,
-            reduce_factor=reduce_factor, pool_size=pool_size,
+            reduce_factor=reduce_factor, pool_size=pool_size, main_lr=main_lr,
+            nn_activation=nn_activation, nn_loss=nn_loss,
+            background_sampling=background_sampling
         )
     else:
         neural_aide.active_search.active_search(
@@ -242,7 +253,9 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
             include_background=include_background,
             evolutive_small=evolutive_small, nb_biased_epoch=nb_biased_epoch,
             biased_lr=biased_lr, tsm=tsm, tsm_lim=tsm_lim,
-            reduce_factor=reduce_factor, pool_size=pool_size,
+            reduce_factor=reduce_factor, pool_size=pool_size, main_lr=main_lr,
+            nn_activation=nn_activation, nn_loss=nn_loss,
+            background_sampling=background_sampling
         )
 
 
@@ -253,7 +266,10 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
                                 biased_lr=0.001, tsm=False,
                                 tsm_lim=None, reduce_factor=None,
                                 pool_size=None, khaled=False, np_seed=None,
-                                tf_seed=None):
+                                tf_seed=None, main_lr=0.001,
+                                nn_activation="relu",
+                                nn_loss="binary_crossentropy",
+                                background_sampling="uncertain"):
     """
     Run the active search.
     Params:
@@ -291,6 +307,12 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
             labels.
         np_seed (int): Seed used by numpy. Can be None.
         tf_seed (int): Seed used by tensorflow. Can be None.
+        main_lr (real): learning rate of the main model
+        nn_activation (string): activation function of the neural network.
+        nn_loss (string): loss of the neural networks
+        background_sampling (string). If "uncertain", background points will be
+            the most uncertain of the model. If "random", background points
+            will be randomly sampled.
     """
 
     SAVING_DIRECTORY = pjoin(ressources_folder, "results")
@@ -398,7 +420,9 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
             include_background=include_background,
             evolutive_small=evolutive_small, nb_biased_epoch=nb_biased_epoch,
             biased_lr=biased_lr, tsm=tsm, tsm_lim=tsm_lim,
-            reduce_factor=reduce_factor,
+            reduce_factor=reduce_factor, main_lr=main_lr,
+            nn_activation=nn_activation, nn_loss=nn_loss,
+            background_sampling=background_sampling
         )
     else:
         neural_aide.active_search.active_search(
@@ -413,5 +437,7 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
             include_background=include_background,
             evolutive_small=evolutive_small, nb_biased_epoch=nb_biased_epoch,
             biased_lr=biased_lr, tsm=tsm, tsm_lim=tsm_lim,
-            reduce_factor=reduce_factor,
+            reduce_factor=reduce_factor, main_lr=main_lr,
+            nn_activation=nn_activation, n_loss=nn_loss,
+            background_sampling=background_sampling
         )

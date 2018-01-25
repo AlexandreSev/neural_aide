@@ -28,7 +28,9 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                   save_biased=True, include_background=False,
                   evolutive_small=False, nb_biased_epoch=10000,
                   biased_lr=0.001, tsm=False, tsm_lim=None,
-                  reduce_factor=None, pool_size=None):
+                  reduce_factor=None, pool_size=None, main_lr=0.001,
+                  nn_activation="relu", nn_loss="binary_crossentropy",
+                  background_sampling="uncertain"):
     """
     Run the Query by disagreement search with neural networks.
     Params:
@@ -71,6 +73,12 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
             len(biased_samples) * 2. / X_train.shape[0].
         pool_size (integer): Size of the pool considered to find the most
             uncertain point. If None, the whole X is used.
+        main_lr (real): Learning rate of the main model.
+        nn_activation (string): activation functions of the neural networks
+        nn_loss (string): loss of the neural networks
+        background_sampling (string). If "uncertain", background points will be
+            the most uncertain of the model. If "random", background points
+            will be randomly sampled.
     """
 
     # Initialize variables
@@ -98,7 +106,8 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
     with graph_main.as_default():
         nn_main = ActiveNeuralNetwork(
             input_shape=input_shape, hidden_shapes=shapes, batch_size=124,
-            loss="binary_crossentropy"
+            loss="binary_crossentropy", learning_rate=main_lr,
+            activation=nn_activation, loss=nn_loss,
             )
     if qdb:
         graph_pos = tf.Graph()
@@ -108,13 +117,15 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
             nn_pos = ActiveNeuralNetwork(
                 input_shape=input_shape, hidden_shapes=shapes, batch_size=124,
                 loss="binary_crossentropy", include_small=include_background,
-                learning_rate=biased_lr
+                learning_rate=biased_lr, activation=nn_activation,
+                loss=nn_loss,
                 )
         with graph_neg.as_default():
             nn_neg = ActiveNeuralNetwork(
                 input_shape=input_shape, hidden_shapes=shapes, batch_size=124,
                 loss="binary_crossentropy", include_small=include_background,
-                learning_rate=biased_lr
+                learning_rate=biased_lr, activation=nn_activation,
+                loss=nn_loss,
                 )
 
     with tf.Session(graph=graph_main) as sess_main:

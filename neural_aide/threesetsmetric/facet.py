@@ -75,7 +75,7 @@ class Facet():
         """
         Get the ridge of the facet. It is composed of dim (dim-2)-polytopes.
         Return:
-            (list of np.array): every ridges describes py their points
+            (list of np.array): every ridges describes by their points
         """
         ridges = []
         for i in range(self.vertices.shape[0]):
