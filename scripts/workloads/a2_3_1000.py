@@ -13,8 +13,8 @@ RANDOM = True
 SHAPES = [16, 16, 1]
 INCLUDE_BACKGROUND = True
 EVOLUTIVE_SMALL = True
-NB_BIASED_EPOCH = 2000
-USE_MAIN_WEIGHTS = False
+NB_BIASED_EPOCH = 1000
+USE_MAIN_WEIGHTS = True
 DISPLAY = False
 SAVE_PLOT = False
 QUERY = 1
@@ -26,7 +26,7 @@ REDUCE_FACTOR = None
 POOL_SIZE = None
 MAIN_LR = 0.001
 ACTIVATION = "relu"
-LOSS = "l2"
+LOSS = "binary_crossentropy"
 
 for i in range(10):
     try:
@@ -50,7 +50,7 @@ for i in range(10):
             pool_size=POOL_SIZE,
             np_seed=i+100,
             tf_seed=i,
-            saving_dir=pjoin(RESSOURCES_FOLDER, "results", "s9_l2"),
+            saving_dir=pjoin(RESSOURCES_FOLDER, "results", "a2_3_1000"),
             main_lr=MAIN_LR,
             nn_activation=ACTIVATION,
             nn_loss=LOSS
