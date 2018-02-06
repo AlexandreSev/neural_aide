@@ -12,7 +12,7 @@ from alex_library.tf_utils import utils
 
 def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
                        biased_samples, positive=True, load_weights=True,
-                       save=True, first_nb_epoch=10000, min_biased_epoch=100,
+                       save=True, first_nb_epoch=10000, min_biased_epoch=10,
                        reduce_factor=None):
     """
     Train a positive neural network
@@ -45,6 +45,11 @@ def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
         sess.run(tf.global_variables_initializer())
         if load_weights:
             utils.loader(nn.params, sess, weights_path)
+        else:
+            # if we don't use previous weights, it is the first training of the
+            # biased nns. We increase the number of epochs in these case to
+            # intialise correctly the weights
+            nb_epoch = max(nb_epoch, 10000)
 
         if positive:
             y_small = np.ones((len(biased_samples), 1))
@@ -73,11 +78,19 @@ def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
                         feed_dict={nn.input_tensor: X_val})
 
         if (positive and (np.sum(pred > 0.5) == 0)):
-            pred += (0.51 - max(pred))
-            logging.debug("any True sample found") 
+            sortedpred = sorted(np.unique(pred), reverse=True)
+            if len(sortedpred) < 2:
+                pred += 0.5
+            else:
+                pred += (0.5 - (sortedpred[0] + sortedpred[1])/2)
+            logging.info("any True sample found") 
         elif ((not positive) and (np.sum(pred <= 0.5) == 0)):
-            pred += (0.49 - min(pred))
-            logging.debug("any False sample found") 
+            sortedpred = sorted(np.unique(pred))
+            if len(sortedpred) < 2:
+                pred -= 0.5
+            else:
+                pred += (0.5 - (sortedpred[0] + sortedpred[1])/2)
+            logging.info("any False sample found") 
 
         # Save the weights for the next iteration
         if save:
