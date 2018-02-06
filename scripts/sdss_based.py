@@ -9,7 +9,7 @@ import sys
 RESSOURCES_FOLDER = "/Users/alex/Documents/LIX-PHD/experiments/clean_active_nn"
 QDB = True
 RANDOM = True
-SHAPES = [32, 32, 1]
+SHAPES = [32, 1]
 INCLUDE_BACKGROUND = True
 EVOLUTIVE_SMALL = True
 NB_BIASED_EPOCH = 2000
@@ -19,10 +19,13 @@ SAVE_PLOT = True
 QUERY = 1
 BIASED_LR = 0.001
 TSM = False
-PLTLIM = True
+PLTLIM = False
 TSM_LIM = None
 REDUCE_FACTOR = None
-POOL_SIZE = 10000
+POOL_SIZE = None
+NP_SEED = 42
+TF_SEED = 42
+
 
 try:
     main.run_experiment_with_sdss(
@@ -42,7 +45,9 @@ try:
         pltlim=PLTLIM,
         tsm_lim=TSM_LIM,
         reduce_factor=REDUCE_FACTOR,
-        pool_size=POOL_SIZE
+        pool_size=POOL_SIZE,
+        np_seed=NP_SEED,
+        tf_seed=TF_SEED,
         )
 except Exception as e:
     logging.exception("Here is the error")

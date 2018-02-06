@@ -5,7 +5,7 @@ from neural_aide import main
 import logging
 import traceback
 from os.path import join as pjoin
-from configuration_local import configuration
+from configuration_cedar import configuration
 
 try:
     main.run_experiment_with_sdss(

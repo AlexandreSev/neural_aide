@@ -24,7 +24,7 @@ PLTLIM = None
 TSM_LIM = None
 REDUCE_FACTOR = None
 POOL_SIZE = None
-MAIN_LR=0.0001
+MAIN_LR=0.00001
 
 
 for i in range(10):

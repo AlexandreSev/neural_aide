@@ -18,7 +18,7 @@ for USE_MAIN_WEIGHTS in [True, False]:
     if (not os.path.isdir(save_dir)):
         os.mkdir(save_dir)
     else:
-        pass
+        continue
 
     for i in range(10):
         try:

@@ -7,7 +7,8 @@ import traceback
 import sys
 from os.path import join as pjoin
 
-RESSOURCES_FOLDER = "/data/asevin/experiment/clean_active_nn/"
+
+RESSOURCES_FOLDER = "/Users/alex/Documents/LIX-PHD/experiments/clean_active_nn/"
 QDB = True
 RANDOM = True
 SHAPES = [16, 16, 1]
@@ -26,14 +27,15 @@ REDUCE_FACTOR = None
 POOL_SIZE = None
 MAIN_LR = 0.001
 ACTIVATION = "relu"
-
+LOSS = "binary_crossentropy"
+BACKGROUND_SAMPLING = "uncertain"
 
 for i in range(10):
     try:
         main.run_experiment_with_sdss(
-        	RESSOURCES_FOLDER,
-        	qdb=QDB,
-        	random=RANDOM,
+            RESSOURCES_FOLDER,
+            qdb=QDB,
+            random=RANDOM,
             shapes=SHAPES,
             include_background=INCLUDE_BACKGROUND,
             evolutive_small=EVOLUTIVE_SMALL,
@@ -52,8 +54,9 @@ for i in range(10):
             tf_seed=i,
             saving_dir=pjoin(RESSOURCES_FOLDER, "results", "s7_relu"),
             main_lr=MAIN_LR,
-            nn_activation=ACTIVATION
+            nn_activation=ACTIVATION,
+            nn_loss=LOSS,
+            background_sampling=BACKGROUND_SAMPLING
             )
     except Exception as e:
         logging.exception("Here is the error")
-        

@@ -27,6 +27,7 @@ POOL_SIZE = None
 MAIN_LR = 0.001
 ACTIVATION = "relu"
 LOSS = "binary_crossentropy"
+BACKGROUND_SAMPLING = "uncertain"
 
 for i in range(10):
     try:
@@ -53,7 +54,8 @@ for i in range(10):
             saving_dir=pjoin(RESSOURCES_FOLDER, "results", "a1_1_frommain"),
             main_lr=MAIN_LR,
             nn_activation=ACTIVATION,
-            nn_loss=LOSS
+            nn_loss=LOSS,
+            background_sampling=BACKGROUND_SAMPLING
             )
     except Exception as e:
         logging.exception("Here is the error")

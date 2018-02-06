@@ -18,7 +18,7 @@ for NB_BIASED_EPOCH in [50, 100, 500, 1000, 2000, 5000]:
     if (not os.path.isdir(save_dir)):
         os.mkdir(save_dir)
     else:
-        pass
+        continue
 
 
 

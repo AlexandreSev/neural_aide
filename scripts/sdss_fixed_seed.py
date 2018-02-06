@@ -6,7 +6,7 @@ import logging
 import traceback
 import sys
 
-RESSOURCES_FOLDER = "/Users/alex/Documents/LIX-PHD/experiments/clean_active_nn"
+RESSOURCES_FOLDER = "/data/asevin/experiment/clean_active_nn/"
 QDB = True
 RANDOM = True
 SHAPES = [32, 1]
@@ -15,7 +15,7 @@ EVOLUTIVE_SMALL = True
 NB_BIASED_EPOCH = 2000
 USE_MAIN_WEIGHTS = False
 DISPLAY = False
-SAVE_PLOT = True
+SAVE_PLOT = False
 QUERY = 1
 BIASED_LR = 0.001
 TSM = False

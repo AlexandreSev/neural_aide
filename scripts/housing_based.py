@@ -18,6 +18,7 @@ BIASED_LR = 0.001
 TSM = False
 TSM_LIM = None
 REDUCE_FACTOR = None
+KHALED = True
 
 try:
     main.run_experiment_with_housing(RESSOURCES_FOLDER, qdb=QDB, random=RANDOM,
@@ -26,6 +27,7 @@ try:
                         nb_biased_epoch=NB_BIASED_EPOCH,
                         use_main_weights=USE_MAIN_WEIGHTS,
                         biased_lr=BIASED_LR, tsm=TSM,
-                        tsm_lim=TSM_LIM, reduce_factor=REDUCE_FACTOR)
+                        tsm_lim=TSM_LIM, reduce_factor=REDUCE_FACTOR,
+                        khaled=KHALED)
 except Exception as e:
     logging.exception("Here is the error")

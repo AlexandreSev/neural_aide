@@ -18,7 +18,7 @@ for BACKGROUND_SAMPLING in ["uncertain", "random"]:
     if (not os.path.isdir(save_dir)):
         os.mkdir(save_dir)
     else:
-        pass
+        continue
 
     for i in range(10):
         try:

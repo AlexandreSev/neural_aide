@@ -24,7 +24,7 @@ for REDUCE_FACTOR in ["evolutive", "none", "noreduction"]:
     if (not os.path.isdir(save_dir)):
         os.mkdir(save_dir)
     else:
-        pass
+        continue
 
 
 
