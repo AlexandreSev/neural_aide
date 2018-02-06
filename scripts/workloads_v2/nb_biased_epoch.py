@@ -12,7 +12,7 @@ for NB_BIASED_EPOCH in [50, 100, 500, 1000, 2000, 5000]:
 
     save_dir = pjoin(configuration["RESSOURCES_FOLDER"],
                      "results",
-                     "nb_biased_epoch_" + NB_BIASED_EPOCH
+                     "nb_biased_epoch_" + str(NB_BIASED_EPOCH)
                )
 
     if (not os.path.isdir(save_dir)):
@@ -32,7 +32,7 @@ for NB_BIASED_EPOCH in [50, 100, 500, 1000, 2000, 5000]:
                 include_background=configuration["INCLUDE_BACKGROUND"],
                 evolutive_small=configuration["EVOLUTIVE_SMALL"],
                 nb_biased_epoch=NB_BIASED_EPOCH,
-                use_main_weights=configuration["use_main_weights"],
+                use_main_weights=configuration["USE_MAIN_WEIGHTS"],
                 display=configuration["DISPLAY"],
                 save_plot=configuration["SAVE_PLOT"],
                 query=configuration["QUERY"],
@@ -46,8 +46,8 @@ for NB_BIASED_EPOCH in [50, 100, 500, 1000, 2000, 5000]:
                 nn_activation=configuration["ACTIVATION"],
                 nn_loss=configuration["LOSS"],
                 background_sampling=configuration["BACKGROUND_SAMPLING"],
-                np_seed=42,
-                tf_seed=7,
+                np_seed=i,
+                tf_seed=10+i,
                 saving_dir=save_dir,
                 )
         except Exception as e:

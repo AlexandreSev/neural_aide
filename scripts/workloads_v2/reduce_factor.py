@@ -38,7 +38,7 @@ for REDUCE_FACTOR in ["evolutive", "none", "noreduction"]:
                 include_background=configuration["INCLUDE_BACKGROUND"],
                 evolutive_small=configuration["EVOLUTIVE_SMALL"],
                 nb_biased_epoch=configuration["NB_BIASED_EPOCH"],
-                use_main_weights=configuration["use_main_weights"],
+                use_main_weights=configuration["USE_MAIN_WEIGHTS"],
                 display=configuration["DISPLAY"],
                 save_plot=configuration["SAVE_PLOT"],
                 query=configuration["QUERY"],
@@ -52,8 +52,8 @@ for REDUCE_FACTOR in ["evolutive", "none", "noreduction"]:
                 nn_activation=configuration["ACTIVATION"],
                 nn_loss=configuration["LOSS"],
                 background_sampling=configuration["BACKGROUND_SAMPLING"],
-                np_seed=42,
-                tf_seed=7,
+                np_seed=i,
+                tf_seed=10+i,
                 saving_dir=save_dir,
                 )
         except Exception as e:
