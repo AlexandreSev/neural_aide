@@ -26,10 +26,11 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                   callback_save_path=None, nb_max_main_epoch=64000, qdb=True,
                   random=True, xlim=None, ylim=None, timer_save_path=None,
                   save_biased=True, include_background=False,
-                  evolutive_small=False, nb_biased_epoch=10000,
-                  biased_lr=0.001, tsm=False, tsm_lim=None,
-                  reduce_factor=None, pool_size=None, main_lr=0.001,
-                  nn_activation="relu", nn_loss="binary_crossentropy",
+                  evolutive_small=False, nb_background_points=None,
+                  nb_biased_epoch=10000, biased_lr=0.001, tsm=False,
+                  tsm_lim=None, reduce_factor=None, pool_size=None,
+                  main_lr=0.001, nn_activation="relu",
+                  nn_loss="binary_crossentropy",
                   background_sampling="uncertain"):
     """
     Run the Query by disagreement search with neural networks.
@@ -210,6 +211,7 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                                          graph_neg, neg_weights_path,
                                          random=random, save=save_biased,
                                          evolutive_small=evolutive_small,
+                                         nb_background_points=nb_background_points,
                                          nb_biased_epoch=nb_biased_epoch,
                                          reduce_factor=reduce_factor,
                                          pool_size=pool_size)

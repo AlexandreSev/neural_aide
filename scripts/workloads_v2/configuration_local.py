@@ -1,5 +1,5 @@
 configuration = {
-	"RESSOURCES_FOLDER": "/Users/alex/Documents/LIX-PHD/experiments/clean_active_nn",
+	"RESSOURCES_FOLDER": "/Users/alex/Documents/LIX-PHD/experiments/neural_aide",
 	"QDB": True,
 	"RANDOM": True,
 	"SHAPES": [16, 16, 1],

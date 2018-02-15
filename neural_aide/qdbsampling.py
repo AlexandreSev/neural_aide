@@ -61,6 +61,12 @@ def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
             _reduce_factor = len(biased_samples)
         elif reduce_factor == "evolutive":
             _reduce_factor = len(biased_samples) * 2. / X_train.shape[0]
+        elif reduce_factor == "evolutive4":
+            _reduce_factor = len(biased_samples) * 4. / X_train.shape[0]
+        elif reduce_factor == "evolutive8":
+            _reduce_factor = len(biased_samples) * 8. / X_train.shape[0]
+        elif reduce_factor == "evolutive16":
+            _reduce_factor = len(biased_samples) * 16. / X_train.shape[0]    
         else:
             _reduce_factor = reduce_factor
 
@@ -101,7 +107,8 @@ def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
 def qdb_sampling(nn_main, sess_main, X_train, y_train, X_val, y_val, iteration,
                  nn_pos, graph_pos, pos_weights_path, nn_neg, graph_neg,
                  neg_weights_path, random=False, save=True,
-                 evolutive_small=False, nb_biased_epoch=10000,
+                 evolutive_small=False, nb_background_points=None,
+                 nb_biased_epoch=10000,
                  reduce_factor=None, pool_size=None,
                  background_sampling="uncertain"):
     """
@@ -147,9 +154,15 @@ def qdb_sampling(nn_main, sess_main, X_train, y_train, X_val, y_val, iteration,
     t0 = time.time()
     
     if evolutive_small:
-        k = 2 * iteration
+        if nb_background_points is None:
+            k = 2 * iteration
+        else:
+            k = nb_background_points * iteration
     else:
-        k = 200
+        if nb_background_points is None:
+            k = 200
+        else:
+            k = nb_background_points
 
     if background_sampling == "uncertain":
         biased_samples = find_k_most_uncertain(nn_main, sess_main, X_val,
