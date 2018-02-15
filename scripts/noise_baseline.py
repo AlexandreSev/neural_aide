@@ -33,6 +33,8 @@ try:
         saving_dir=pjoin(configuration["RESSOURCES_FOLDER"],
                          "results", "baseline"),
         noise=True,
+        uniform_noise=False,
+        nb_points_noise=10,
         )
 except Exception as e:
     logging.exception("Here is the error")

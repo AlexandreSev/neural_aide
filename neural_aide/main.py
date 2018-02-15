@@ -63,7 +63,8 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
                              np_seed=None, tf_seed=None, saving_dir=None,
                              main_lr=0.001, nn_activation="relu",
                              nn_loss="binary_crossentropy",
-                             background_sampling="uncertain", noise=False):
+                             background_sampling="uncertain", noise=False,
+                             uniform_noise=True, nb_points_noise=10,):
     """
     Run the active search.
     Params:
@@ -235,6 +236,7 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
             reduce_factor=reduce_factor, pool_size=pool_size, main_lr=main_lr,
             nn_activation=nn_activation, nn_loss=nn_loss,
             background_sampling=background_sampling, noise=noise,
+            uniform_noise=uniform_noise, nb_points_noise=nb_points_noise,
         )
     else:
         neural_aide.active_search.active_search(
@@ -252,6 +254,7 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
             reduce_factor=reduce_factor, pool_size=pool_size, main_lr=main_lr,
             nn_activation=nn_activation, nn_loss=nn_loss,
             background_sampling=background_sampling, noise=noise,
+            uniform_noise=uniform_noise, nb_points_noise=nb_points_noise,
         )
 
 

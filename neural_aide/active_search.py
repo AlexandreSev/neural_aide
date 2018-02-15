@@ -27,11 +27,12 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                   save_biased=True, include_background=False,
                   evolutive_small=False, nb_background_points=None,
                   nb_biased_epoch=10000, biased_lr=0.001, reduce_factor=None,
-                  pool_size=None, noise=False,
+                  pool_size=None, noise=False, uniform_noise=True,
+                  nb_points_noise=10,
                   main_lr=0.001, nn_activation="relu",
                   nn_loss="binary_crossentropy",
                   background_sampling="uncertain",
-                  noise_threshold=0.1):
+                  noise_threshold=0.01):
     """
     Run the Query by disagreement search with neural networks.
     Params:
@@ -122,6 +123,9 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                 loss=nn_loss, include_small=include_background,
                 learning_rate=biased_lr, activation=nn_activation,
                 )
+
+    if noise and not(uniform_noise):
+        noise_samples = np.random.choice(np.where(y==1)[0], 10)
 
     with tf.Session(graph=graph_main) as sess_main:
 
@@ -220,9 +224,26 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                 X_train = np.vstack((X_train,
                                      X_val[sample].reshape((1, -1))))
                 y_to_add = y_val[sample].reshape((1, 1))
-                if noise and np.random.random()<noise_threshold:
-                    y_to_add = 1 - y_to_add
-                    logging.info("Noisy Sample")
+                if noise:
+                    if not(uniform_noise) and (y_to_add[0, 0] == 0):
+                        noise_distance = (
+                            np.linalg.norm(X_val[noise_samples[0]]
+                                           - X_val[sample])
+                            )
+                        for noise_sample in noise_samples[1:]:
+                            noise_distance = min(
+                                noise_distance,
+                                np.linalg.norm(X_val[noise_sample]
+                                               - X_val[sample])
+                                )
+                        noise_current_threshold = (noise_threshold
+                                                   / noise_distance)
+                    else:
+                        noise_current_threshold = noise_threshold
+                    logging.info("Current noisy threshold: %s" % noise_current_threshold)
+                    if np.random.random()<noise_current_threshold:
+                        y_to_add = 1 - y_to_add
+                        logging.info("Noisy Sample")
                 y_train = np.vstack((y_train,
                                      y_to_add))
 
