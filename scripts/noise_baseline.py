@@ -21,9 +21,7 @@ try:
         save_plot=configuration["SAVE_PLOT"],
         query=configuration["QUERY"],
         biased_lr=configuration["BIASED_LR"],
-        tsm=configuration["TSM"],
         pltlim=configuration["PLTLIM"],
-        tsm_lim=configuration["TSM_LIM"],
         reduce_factor=configuration["REDUCE_FACTOR"],
         pool_size=configuration["POOL_SIZE"],
         main_lr=configuration["MAIN_LR"],
@@ -34,6 +32,7 @@ try:
         tf_seed=7,
         saving_dir=pjoin(configuration["RESSOURCES_FOLDER"],
                          "results", "baseline"),
+        noise=True,
         )
 except Exception as e:
     logging.exception("Here is the error")

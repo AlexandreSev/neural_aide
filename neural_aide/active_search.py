@@ -14,7 +14,6 @@ from .visualize_database import (plot_advancement_qdb_search,
                                  random_uncertainty_plot)
 from .sampling import initial_sampling, uncertainty_sampling
 from .qdbsampling import qdb_sampling
-from threesetsmetric import threesetsmanager
 from alex_library.tf_utils import utils
 
 
@@ -27,11 +26,12 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                   random=True, xlim=None, ylim=None, timer_save_path=None,
                   save_biased=True, include_background=False,
                   evolutive_small=False, nb_background_points=None,
-                  nb_biased_epoch=10000, biased_lr=0.001, tsm=False,
-                  tsm_lim=None, reduce_factor=None, pool_size=None,
+                  nb_biased_epoch=10000, biased_lr=0.001, reduce_factor=None,
+                  pool_size=None, noise=False,
                   main_lr=0.001, nn_activation="relu",
                   nn_loss="binary_crossentropy",
-                  background_sampling="uncertain"):
+                  background_sampling="uncertain",
+                  noise_threshold=0.1):
     """
     Run the Query by disagreement search with neural networks.
     Params:
@@ -65,9 +65,6 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
             will change over time or not.
         nb_biased_epoch (integer): Number of epoch to do at the first step.
         biased_lr (real): Learning rate of biased neural networks.
-        tsm (boolean): Use or not three set
-        tsm_lim (integerr): Maximum number of tuples examined during one
-            iteration of tsm.update_regions
         reduce_factor (real or string): The gradients of the biased sample will
             be divided by this factor. If None, it will be equal to
             len(biased_sample). If "evolutive", it will be equal to
@@ -167,13 +164,6 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                                             stop_at_1=True, saving=False)
 
                 callback["samples"] = samples
-                # Initialize tsm
-                if tsm:
-                    tsm_object = threesetsmanager.ThreeSetsManager(
-                        X_train, y_train, None, tsm_lim,
-                        lower_bounds=np.min(X_val, axis=0),
-                        upper_bounds=np.max(X_val, axis=0)
-                        )
 
                 tbis = time.time()
                 timer["main_nn"].append(tbis - t)
@@ -227,80 +217,14 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                                                       X_val,
                                                       pool_size=pool_size)
 
-                    if (tsm and
-                            (tsm_object.get_label(X_val[sample]) is not None)):
-                        X_train = np.vstack((X_train,
-                                             X_val[sample].reshape((1, -1))))
-                        y_train = np.vstack((
-                            y_train, np.array([tsm_object.get_label(
-                                               X_train[-1]
-                                               )]).reshape((1, 1))
-                            ))
-
-                        if qdb:
-                            if samples == 0:
-                                biased_samples = [i - 1
-                                                  for i in biased_samples]
-                            elif sample != (X_val.shape[0] - 1):
-                                biased_samples = [i - 1 if i > sample else i
-                                                  for i
-                                                  in biased_samples]
-
-                            for variable in [X_val, y_val, pred_pos, pred_neg,
-                                             old_pred]:
-                                variable = np.delete(variable, sample, 0)
-                        else:
-                            for variable in [X_val, y_val]:
-                                variable = np.delete(variable, sample, 0)
-
-                        logging.info("I REPEAT !!!!!")
-                        logging.info("Training main model with falsy new " +
-                                     "sample !")
-                        logging.info("Label of the new_sample: %s"
-                                     % y_train[-1])
-                        temp = nn_main.training(
-                            sess_main, X_train, y_train, n_epoch=nb_epoch_main,
-                            display_step=100000, saving=False, stop_at_1=True,
-                            callback=True
-                            )
-
-                        # Save the weights
-                        if "%s" in main_weights_path:
-                            utils.saver(
-                                nn_main.params,
-                                sess_main,
-                                main_weights_path % iteration
-                                )
-                        else:
-                            utils.saver(nn_main.params, sess_main,
-                                        main_weights_path)
-
-                        callback["training_error"].append(
-                            temp["training_error"][-1]
-                            )
-
-                        # If the model did not converge, increase maximum
-                        # training time next time.
-                        if (callback["training_error"][-1] != 1):
-                            if (2 * nb_epoch_main) >= nb_max_main_epoch:
-                                nb_epoch_main = nb_max_main_epoch
-                            else:
-                                nb_epoch_main *= 2
-                        repeat = True
-                        val_score = compute_score(nn_main, X, y, sess_main)
-
-                        logging.info("Validation F1 score: %s" % val_score)
-
-                if tsm:
-                    logging.info("Adding sample to tsm")
-                    tsm_object.add_sample(X_val[sample], y_val[sample])
-                    logging.info("Updating_new_regions")
-                    tsm_object.update_regions()
-
                 X_train = np.vstack((X_train,
                                      X_val[sample].reshape((1, -1))))
+                y_to_add = y_val[sample].reshape((1, 1))
+                if noise and np.random.random()<noise_threshold:
+                    y_to_add = 1 - y_to_add
+                    logging.info("Noisy Sample")
                 y_train = np.vstack((y_train,
-                                     y_val[sample].reshape((1, 1))))
+                                     y_to_add))
 
                 if qdb:
                     if samples == 0:

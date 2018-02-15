@@ -58,13 +58,12 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
                              include_background=True, evolutive_small=True,
                              nb_biased_epoch=2000, use_main_weights=False,
                              display=False, save_plot=False, query=1,
-                             biased_lr=0.001, tsm=False, pltlim=True,
-                             tsm_lim=None, reduce_factor=None,
-                             nb_background_points=None, pool_size=None,
+                             biased_lr=0.001, pltlim=True,
+                             reduce_factor=None, pool_size=None,
                              np_seed=None, tf_seed=None, saving_dir=None,
                              main_lr=0.001, nn_activation="relu",
                              nn_loss="binary_crossentropy",
-                             background_sampling="uncertain",):
+                             background_sampling="uncertain", noise=False):
     """
     Run the active search.
     Params:
@@ -93,10 +92,6 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
         save_plot (boolean): If True, advancement plot will be saved.
         query (integer): CF create_query function.
         biased_lr (real): learning rate of biased neural networks.
-        tsm (boolean): Use or not three set.
-        pltlim (boolean): Zoom on the positive area
-        tsm_lim (integerr): Maximum number of tuples examined during one
-            iteration of tsm.update_regions
         reduce_factor (real or string): The gradients of the biased sample will
             be divided by this factor. If None, it will be equal to
             len(biased_sample). If "evolutive", it will be equal to
@@ -127,12 +122,12 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
     identifier = "sdss_" + date
     for name, value in zip([
             "qdb", "random", "shapes", "include_background", "evolutive_small",
-            "nb_background_points", "nb_biased_epoch", "use_main_weights",
-            "query", "tsm", "biased_lr", "reduce_factor", "pool_size",
+            "nb_biased_epoch", "use_main_weights", "query", "biased_lr",
+            "reduce_factor", "pool_size",
                             ], [
             qdb, random, shapes, include_background, evolutive_small,
-            nb_background_points, nb_biased_epoch, use_main_weights, query,
-            tsm, biased_lr, reduce_factor, pool_size
+            nb_biased_epoch, use_main_weights, query, biased_lr,
+            reduce_factor, pool_size
                                ]):
 
         identifier += "_" + name + "_" + str(value)
@@ -164,11 +159,11 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
 
     for name, value in zip([
             "qdb", "random", "shapes", "include_background", "evolutive_small",
-            "nb_biased_epoch", "use_main_weights", "query", "tsm", "biased_lr",
+            "nb_biased_epoch", "use_main_weights", "query", "biased_lr",
             "reduce_factor", "pool_size",
                             ], [
             qdb, random, shapes, include_background, evolutive_small,
-            nb_biased_epoch, use_main_weights, query, tsm, biased_lr,
+            nb_biased_epoch, use_main_weights, query, biased_lr,
             reduce_factor, pool_size
                                ]):
         logging.info("%s: %s" % (name, value))
@@ -235,13 +230,11 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
             nb_max_main_epoch=4000, qdb=qdb, random=random, xlim=xlim,
             ylim=ylim, timer_save_path=timer_save_path, save_biased=False,
             include_background=include_background,
-            evolutive_small=evolutive_small,
-            nb_background_points=nb_background_points,
-            nb_biased_epoch=nb_biased_epoch,
-            biased_lr=biased_lr, tsm=tsm, tsm_lim=tsm_lim,
+            evolutive_small=evolutive_small, nb_biased_epoch=nb_biased_epoch,
+            biased_lr=biased_lr,
             reduce_factor=reduce_factor, pool_size=pool_size, main_lr=main_lr,
             nn_activation=nn_activation, nn_loss=nn_loss,
-            background_sampling=background_sampling
+            background_sampling=background_sampling, noise=noise,
         )
     else:
         neural_aide.active_search.active_search(
@@ -254,13 +247,11 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
             nb_max_main_epoch=4000, qdb=qdb, random=random, xlim=xlim,
             ylim=ylim, timer_save_path=timer_save_path, save_biased=True,
             include_background=include_background,
-            evolutive_small=evolutive_small,
-            nb_background_points=nb_background_points,
-            nb_biased_epoch=nb_biased_epoch,
-            biased_lr=biased_lr, tsm=tsm, tsm_lim=tsm_lim,
+            evolutive_small=evolutive_small, nb_biased_epoch=nb_biased_epoch,
+            biased_lr=biased_lr,
             reduce_factor=reduce_factor, pool_size=pool_size, main_lr=main_lr,
             nn_activation=nn_activation, nn_loss=nn_loss,
-            background_sampling=background_sampling
+            background_sampling=background_sampling, noise=noise,
         )
 
 
