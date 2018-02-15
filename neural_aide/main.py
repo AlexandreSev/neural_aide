@@ -127,12 +127,12 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
     identifier = "sdss_" + date
     for name, value in zip([
             "qdb", "random", "shapes", "include_background", "evolutive_small",
-            "nb_biased_epoch", "use_main_weights", "query", "tsm", "biased_lr",
-            "reduce_factor", "pool_size",
+            "nb_background_points", "nb_biased_epoch", "use_main_weights",
+            "query", "tsm", "biased_lr", "reduce_factor", "pool_size",
                             ], [
             qdb, random, shapes, include_background, evolutive_small,
-            nb_biased_epoch, use_main_weights, query, tsm, biased_lr,
-            reduce_factor, pool_size
+            nb_background_points, nb_biased_epoch, use_main_weights, query,
+            tsm, biased_lr, reduce_factor, pool_size
                                ]):
 
         identifier += "_" + name + "_" + str(value)
