@@ -13,7 +13,7 @@ from alex_library.tf_utils import utils
 def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
                        biased_samples, positive=True, load_weights=True,
                        save=True, first_nb_epoch=10000, min_biased_epoch=10,
-                       reduce_factor=None):
+                       reduce_factor=None, loss_criteria=True):
     """
     Train a positive neural network
     Params:
@@ -74,10 +74,10 @@ def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
         nn.training(sess, X_train,
                     y_train, X_small=X_val[biased_samples],
                     y_small=y_small, n_epoch=nb_epoch,
-                    display_step=100000, stop_at_1=True,
+                    display_step=100000, stop_at_1=not loss_criteria,
                     saving=False, callback=True,
                     nb_min_epoch=min_biased_epoch,
-                    reduce_factor=_reduce_factor)
+                    reduce_factor=_reduce_factor, loss_criteria=loss_criteria)
 
         # Predict the whole database
         pred = sess.run(nn.prediction,
@@ -110,7 +110,7 @@ def qdb_sampling(nn_main, sess_main, X_train, y_train, X_val, y_val, iteration,
                  evolutive_small=False, nb_background_points=None,
                  nb_biased_epoch=10000,
                  reduce_factor=None, pool_size=None,
-                 background_sampling="uncertain"):
+                 background_sampling="uncertain", loss_criteria=True):
     """
     Find the next sample with query by disagreement.
     Params:
@@ -179,7 +179,7 @@ def qdb_sampling(nn_main, sess_main, X_train, y_train, X_val, y_val, iteration,
     pred_pos = training_biased_nn(
         X_train, y_train, X_val, y_val, nn_pos, graph_pos, pos_weights_path,
         biased_samples, True, (iteration != 3), save, nb_biased_epoch,
-        reduce_factor=reduce_factor,
+        reduce_factor=reduce_factor, loss_criteria=loss_criteria,
         )
     t2 = time.time()
 
@@ -188,7 +188,7 @@ def qdb_sampling(nn_main, sess_main, X_train, y_train, X_val, y_val, iteration,
     pred_neg = training_biased_nn(
         X_train, y_train, X_val, y_val, nn_neg, graph_neg, neg_weights_path,
         biased_samples, False, (iteration != 3), save, nb_biased_epoch,
-        reduce_factor=reduce_factor,
+        reduce_factor=reduce_factor, loss_criteria=loss_criteria,
         )
     t3 = time.time()
 

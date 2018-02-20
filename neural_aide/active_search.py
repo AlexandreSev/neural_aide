@@ -31,7 +31,7 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                   tsm_lim=None, reduce_factor=None, pool_size=None,
                   main_lr=0.001, nn_activation="relu",
                   nn_loss="binary_crossentropy",
-                  background_sampling="uncertain"):
+                  background_sampling="uncertain", loss_criteria=True):
     """
     Run the Query by disagreement search with neural networks.
     Params:
@@ -163,7 +163,7 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
 
                 # Train the neural network
                 callback = nn_main.training(sess_main, X_train, y_train,
-                                            n_epoch=100000, display_step=100,
+                                            n_epoch=100000, display_step=1000,
                                             stop_at_1=True, saving=False)
 
                 callback["samples"] = samples
@@ -214,7 +214,8 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                                          nb_background_points=nb_background_points,
                                          nb_biased_epoch=nb_biased_epoch,
                                          reduce_factor=reduce_factor,
-                                         pool_size=pool_size)
+                                         pool_size=pool_size,
+                                         loss_criteria=loss_criteria)
                             )
 
                         for i, key in enumerate([
@@ -260,8 +261,9 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                                      % y_train[-1])
                         temp = nn_main.training(
                             sess_main, X_train, y_train, n_epoch=nb_epoch_main,
-                            display_step=100000, saving=False, stop_at_1=True,
-                            callback=True
+                            display_step=100000, saving=False,
+                            stop_at_1=not loss_criteria, callback=True,
+                            loss_criteria=loss_criteria
                             )
 
                         # Save the weights
@@ -327,8 +329,8 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                 logging.info("Training main model")
                 temp = nn_main.training(
                     sess_main, X_train, y_train, n_epoch=nb_epoch_main,
-                    display_step=100000, saving=False, stop_at_1=True,
-                    callback=True
+                    display_step=100000, saving=False, stop_at_1=not loss_criteria,
+                    callback=True, loss_criteria=loss_criteria
                     )
 
                 tbis = time.time()
