@@ -95,7 +95,7 @@ def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
                     pred += (0.5 - (sortedpred[0] + sortedpred[1])/2)
                 logging.info("any False sample found in negative model") 
                 reduce_factor /= 2.
-            elif (np.sum(pred < 0.5) == 0):
+            elif (np.sum(pred > 0.5) == 0):
                 logging.info("any True sample found in negative model")
                 reduce_factor *= 2.
 
