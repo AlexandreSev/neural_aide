@@ -104,8 +104,8 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
     graph_main = tf.Graph()
     input_shape = X.shape[1]
 
-    reduce_factor_pos=2
-    reduce_factor_neg=2
+    reduce_factor_pos = reduce_factor
+    reduce_factor_neg = reduce_factor
 
     with graph_main.as_default():
         nn_main = ActiveNeuralNetwork(
@@ -146,6 +146,7 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
             timer["total"].append(t - t0)
 
             logging.info("# Iteration %s #" % iteration)
+            logging.info("reduce_factor pos %s neg %s" % (reduce_factor_pos, reduce_factor_neg))
 
             # Test if it is the first iteration
             if iteration == 2:

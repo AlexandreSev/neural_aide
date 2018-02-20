@@ -8,6 +8,7 @@ import tensorflow as tf
 
 from .sampling import find_k_most_uncertain
 from alex_library.tf_utils import utils
+from.active_nn import compute_score
 
 
 def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
@@ -56,7 +57,8 @@ def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
         else:
             y_small = np.zeros((len(biased_samples), 1))
 
-        _reduce_factor = len(biased_samples) * reduce_factor / X_train.shape[0]  
+        # _reduce_factor = len(biased_samples) * reduce_factor / X_train.shape[0]  
+        _reduce_factor = reduce_factor
 
         # Train the neural network
         nn.training(sess, X_train,
@@ -71,6 +73,11 @@ def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
         pred = sess.run(nn.prediction,
                         feed_dict={nn.input_tensor: X_val})
 
+        if compute_score(nn, X_train, y_train, sess) != 1:
+            reduce_factor *= 2
+
+
+
         if positive:
             if (np.sum(pred > 0.5) == 0):
                 sortedpred = sorted(np.unique(pred), reverse=True)
@@ -82,10 +89,8 @@ def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
                     pred += (0.5 - (sortedpred[0] + sortedpred[1])/2)
 
                 logging.info("any True sample found in positive model")
-                reduce_factor /= 2.
             elif (np.sum(pred < 0.5) == 0):
                 logging.info("any False sample found in positive model")
-                reduce_factor *= 2.
         else:
             if (np.sum(pred <= 0.5) == 0):
                 sortedpred = sorted(np.unique(pred))
@@ -94,10 +99,8 @@ def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
                 else:
                     pred += (0.5 - (sortedpred[0] + sortedpred[1])/2)
                 logging.info("any False sample found in negative model") 
-                reduce_factor /= 2.
             elif (np.sum(pred > 0.5) == 0):
                 logging.info("any True sample found in negative model")
-                reduce_factor *= 2.
 
         # Save the weights for the next iteration
         if save:
