@@ -24,7 +24,7 @@ try:
         tsm=configuration["TSM"],
         pltlim=configuration["PLTLIM"],
         tsm_lim=configuration["TSM_LIM"],
-        reduce_factor=configuration["REDUCE_FACTOR"],
+        reduce_factor=2.,
         pool_size=configuration["POOL_SIZE"],
         main_lr=configuration["MAIN_LR"],
         nn_activation=configuration["ACTIVATION"],

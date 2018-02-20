@@ -28,10 +28,10 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                   save_biased=True, include_background=False,
                   evolutive_small=False, nb_background_points=None,
                   nb_biased_epoch=10000, biased_lr=0.001, tsm=False,
-                  tsm_lim=None, reduce_factor=None, pool_size=None,
+                  tsm_lim=None, reduce_factor=2., pool_size=None,
                   main_lr=0.001, nn_activation="relu",
                   nn_loss="binary_crossentropy",
-                  background_sampling="uncertain", loss_criteria=True):
+                  background_sampling="uncertain", loss_criteria=False):
     """
     Run the Query by disagreement search with neural networks.
     Params:
@@ -103,6 +103,9 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
     t0 = time.time()
     graph_main = tf.Graph()
     input_shape = X.shape[1]
+
+    reduce_factor_pos=2
+    reduce_factor_neg=2
 
     with graph_main.as_default():
         nn_main = ActiveNeuralNetwork(
@@ -204,7 +207,8 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                 while repeat:
                     repeat = False
                     if qdb:
-                        sample, pred_pos, pred_neg, biased_samples, times = (
+                        (sample, pred_pos, pred_neg, biased_samples, times,
+                            reduce_factor_pos, reduce_factor_neg) = (
                             qdb_sampling(nn_main, sess_main, X_train, y_train,
                                          X_val, y_val, iteration, nn_pos,
                                          graph_pos, pos_weights_path, nn_neg,
@@ -213,7 +217,8 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                                          evolutive_small=evolutive_small,
                                          nb_background_points=nb_background_points,
                                          nb_biased_epoch=nb_biased_epoch,
-                                         reduce_factor=reduce_factor,
+                                         reduce_factor_pos=reduce_factor_pos,
+                                         reduce_factor_neg=reduce_factor_neg,
                                          pool_size=pool_size,
                                          loss_criteria=loss_criteria)
                             )

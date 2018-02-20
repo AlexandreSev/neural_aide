@@ -56,19 +56,7 @@ def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
         else:
             y_small = np.zeros((len(biased_samples), 1))
 
-
-        if reduce_factor is None:
-            _reduce_factor = len(biased_samples)
-        elif reduce_factor == "evolutive":
-            _reduce_factor = len(biased_samples) * 2. / X_train.shape[0]
-        elif reduce_factor == "evolutive4":
-            _reduce_factor = len(biased_samples) * 4. / X_train.shape[0]
-        elif reduce_factor == "evolutive8":
-            _reduce_factor = len(biased_samples) * 8. / X_train.shape[0]
-        elif reduce_factor == "evolutive16":
-            _reduce_factor = len(biased_samples) * 16. / X_train.shape[0]    
-        else:
-            _reduce_factor = reduce_factor
+        _reduce_factor = len(biased_samples) * reduce_factor / X_train.shape[0]  
 
         # Train the neural network
         nn.training(sess, X_train,
@@ -83,25 +71,38 @@ def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
         pred = sess.run(nn.prediction,
                         feed_dict={nn.input_tensor: X_val})
 
-        if (positive and (np.sum(pred > 0.5) == 0)):
-            sortedpred = sorted(np.unique(pred), reverse=True)
-            if len(sortedpred) < 2:
-                pred += 0.5
-            else:
-                pred += (0.5 - (sortedpred[0] + sortedpred[1])/2)
-            logging.info("any True sample found") 
-        elif ((not positive) and (np.sum(pred <= 0.5) == 0)):
-            sortedpred = sorted(np.unique(pred))
-            if len(sortedpred) < 2:
-                pred -= 0.5
-            else:
-                pred += (0.5 - (sortedpred[0] + sortedpred[1])/2)
-            logging.info("any False sample found") 
+        if positive:
+            if (np.sum(pred > 0.5) == 0):
+                sortedpred = sorted(np.unique(pred), reverse=True)
+
+                if len(sortedpred) < 2:
+                    pred += 0.5
+
+                else:
+                    pred += (0.5 - (sortedpred[0] + sortedpred[1])/2)
+
+                logging.info("any True sample found in positive model")
+                reduce_factor /= 2.
+            elif (np.sum(pred < 0.5) == 0):
+                logging.info("any False sample found in positive model")
+                reduce_factor *= 2.
+        else:
+            if (np.sum(pred <= 0.5) == 0):
+                sortedpred = sorted(np.unique(pred))
+                if len(sortedpred) < 2:
+                    pred -= 0.5
+                else:
+                    pred += (0.5 - (sortedpred[0] + sortedpred[1])/2)
+                logging.info("any False sample found in negative model") 
+                reduce_factor /= 2.
+            elif (np.sum(pred < 0.5) == 0):
+                logging.info("any True sample found in negative model")
+                reduce_factor *= 2.
 
         # Save the weights for the next iteration
         if save:
             utils.saver(nn.params, sess, weights_path)
-    return pred
+    return pred, reduce_factor
 
 
 def qdb_sampling(nn_main, sess_main, X_train, y_train, X_val, y_val, iteration,
@@ -109,7 +110,7 @@ def qdb_sampling(nn_main, sess_main, X_train, y_train, X_val, y_val, iteration,
                  neg_weights_path, random=False, save=True,
                  evolutive_small=False, nb_background_points=None,
                  nb_biased_epoch=10000,
-                 reduce_factor=None, pool_size=None,
+                 reduce_factor_pos=2, pool_size=None, reduce_factor_neg=2,
                  background_sampling="uncertain", loss_criteria=True):
     """
     Find the next sample with query by disagreement.
@@ -176,19 +177,19 @@ def qdb_sampling(nn_main, sess_main, X_train, y_train, X_val, y_val, iteration,
 
     # Train the positively-biased network
     logging.info("Training positive model")
-    pred_pos = training_biased_nn(
+    pred_pos, reduce_factor_pos = training_biased_nn(
         X_train, y_train, X_val, y_val, nn_pos, graph_pos, pos_weights_path,
         biased_samples, True, (iteration != 3), save, nb_biased_epoch,
-        reduce_factor=reduce_factor, loss_criteria=loss_criteria,
+        reduce_factor=reduce_factor_pos, loss_criteria=loss_criteria,
         )
     t2 = time.time()
 
     # Train the negatively-biased netswork
     logging.info("Training negative model")
-    pred_neg = training_biased_nn(
+    pred_neg, reduce_factor_neg = training_biased_nn(
         X_train, y_train, X_val, y_val, nn_neg, graph_neg, neg_weights_path,
         biased_samples, False, (iteration != 3), save, nb_biased_epoch,
-        reduce_factor=reduce_factor, loss_criteria=loss_criteria,
+        reduce_factor=reduce_factor_neg, loss_criteria=loss_criteria,
         )
     t3 = time.time()
 
@@ -213,9 +214,11 @@ def qdb_sampling(nn_main, sess_main, X_train, y_train, X_val, y_val, iteration,
         logging.debug("Here is order: " + str(order))
         t4 = time.time()
         timers = (t1-t0, t2-t1, t3-t2, t4-t3)
-        return order[0], pred_pos, pred_neg, biased_samples, timers
+        return (order[0], pred_pos, pred_neg, biased_samples, timers,
+            reduce_factor_pos, reduce_factor_neg)
 
     # If the two models agree, choose the first biased point
     t4 = time.time()
     timers = (t1-t0, t2-t1, t3-t2, t4-t3)
-    return biased_samples[0], pred_pos, pred_neg, biased_samples, timers
+    return (biased_samples[0], pred_pos, pred_neg, biased_samples, timers,
+        reduce_factor_pos, reduce_factor_neg)
