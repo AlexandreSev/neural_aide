@@ -16,7 +16,7 @@ try:
         include_background=configuration["INCLUDE_BACKGROUND"],
         evolutive_small=configuration["EVOLUTIVE_SMALL"],
         nb_biased_epoch=configuration["NB_BIASED_EPOCH"],
-        use_main_weights=True,
+        use_main_weights=False,
         display=configuration["DISPLAY"],
         save_plot=configuration["SAVE_PLOT"],
         query=configuration["QUERY"],
