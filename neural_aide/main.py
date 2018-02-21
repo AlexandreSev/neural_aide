@@ -66,7 +66,8 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
                              np_seed=None, tf_seed=None, saving_dir=None,
                              main_lr=0.001, nn_activation="relu",
                              nn_loss="binary_crossentropy",
-                             background_sampling="uncertain",):
+                             background_sampling="uncertain",
+                             doubleFilters=False):
     """
     Run the active search.
     Params:
@@ -243,7 +244,8 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
             biased_lr=biased_lr,
             reduce_factor=reduce_factor, pool_size=pool_size, main_lr=main_lr,
             nn_activation=nn_activation, nn_loss=nn_loss,
-            background_sampling=background_sampling
+            background_sampling=background_sampling,
+            doubleFilters=doubleFilters
         )
     else:
         active_search(

@@ -14,8 +14,9 @@ try:
         random=configuration["RANDOM"],
         shapes=[16, 1],
         include_background=configuration["INCLUDE_BACKGROUND"],
-        evolutive_small=configuration["EVOLUTIVE_SMALL"],
+        evolutive_small=True,
         nb_biased_epoch=configuration["NB_BIASED_EPOCH"],
+        nb_background_points=2,
         use_main_weights = True,
         display=configuration["DISPLAY"],
         save_plot=configuration["SAVE_PLOT"],
@@ -34,6 +35,7 @@ try:
         tf_seed=7,
         saving_dir=pjoin(configuration["RESSOURCES_FOLDER"],
                          "results", "baseline"),
+        doubleFilters=True
         )
 except Exception as e:
     logging.exception("Here is the error")

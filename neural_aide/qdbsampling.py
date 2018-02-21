@@ -5,6 +5,7 @@ import logging
 import numpy as np
 import time
 import tensorflow as tf
+import pickle
 
 from .sampling import find_k_most_uncertain
 from alex_library.tf_utils import utils
@@ -14,7 +15,7 @@ from .active_nn import compute_score, ActiveNeuralNetwork
 def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
                        biased_samples, positive=True, load_weights=True,
                        save=True, first_nb_epoch=10000, min_biased_epoch=10,
-                       reduce_factor=None):
+                       reduce_factor=None, doubleFilters=False):
     """
     Train a positive neural network
     Params:
@@ -45,7 +46,31 @@ def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
         # Initialize weights and load previous one if they exist
         sess.run(tf.global_variables_initializer())
         if load_weights:
-            utils.loader(nn.params, sess, weights_path)
+            if doubleFilters:
+                with open(weights_path, "r") as fp:
+                    dico_saver = pickle.load(fp)
+                #W0
+                noise = np.random.normal(0, 0.0001, dico_saver["weights"]["W0"].shape)
+                dico_saver["weights"]["W0"] = np.hstack((
+                    dico_saver["weights"]["W0"] + noise,
+                    dico_saver["weights"]["W0"] - noise
+                    ))
+                #b0
+                noise = np.random.normal(0, 0.0001, dico_saver["biases"]["b0"].shape)
+                dico_saver["biases"]["b0"] = np.concatenate((
+                    dico_saver["biases"]["b0"] + noise,
+                    dico_saver["biases"]["b0"] - noise
+                )) 
+
+                #W1
+                noise = np.random.normal(0, 0.0001, dico_saver["weights"]["W1"].shape)
+                dico_saver["weights"]["W1"] = np.vstack((
+                    dico_saver["weights"]["W1"] + noise,
+                    dico_saver["weights"]["W1"] - noise
+                    ))
+                utils.loaderFromDict(nn.params, sess, dico_saver)
+            else:
+                utils.loader(nn.params, sess, weights_path)
         else:
             # if we don't use previous weights, it is the first training of the
             # biased nns. We increase the number of epochs in these case to
@@ -233,7 +258,8 @@ def qdb_sampling_dependant(nn_main, sess_main, X_train, y_train, X_val, y_val,
                            nb_background_points=None, nb_biased_epoch=10000,
                            reduce_factor_pos=2, pool_size=None,
                            reduce_factor_neg=2,
-                           background_sampling="uncertain"):
+                           background_sampling="uncertain",
+                           doubleFilters=False):
     """
     Find the next sample with query by disagreement.
     Params:
@@ -299,7 +325,15 @@ def qdb_sampling_dependant(nn_main, sess_main, X_train, y_train, X_val, y_val,
 
     graph_pos = tf.Graph()
     with graph_pos.as_default():
-        nn_pos = ActiveNeuralNetwork(
+        if doubleFilters:
+            nn_pos = ActiveNeuralNetwork(
+                    input_shape=nn_main.input_shape,
+                    hidden_shapes=[2 * nn_main.current_hidden_shapes[0], 1],
+                    include_small=True, loss="binary_crossentropy",
+                    learning_rate=0.001, activation="relu",
+                    )
+        else:
+            nn_pos = ActiveNeuralNetwork(
                 input_shape=nn_main.input_shape,
                 hidden_shapes=nn_main.current_hidden_shapes,
                 include_small=True, loss="binary_crossentropy",
@@ -311,13 +345,21 @@ def qdb_sampling_dependant(nn_main, sess_main, X_train, y_train, X_val, y_val,
     pred_pos, reduce_factor_pos = training_biased_nn(
         X_train, y_train, X_val, y_val, nn_pos, graph_pos, main_weights_path,
         biased_samples, True, (iteration != 3), False, nb_biased_epoch,
-        reduce_factor=reduce_factor_pos,
+        reduce_factor=reduce_factor_pos, doubleFilters=doubleFilters,
         )
     t2 = time.time()
 
     graph_neg = tf.Graph()
     with graph_neg.as_default():
-        nn_neg = ActiveNeuralNetwork(
+        if doubleFilters:
+            nn_neg = ActiveNeuralNetwork(
+                    input_shape=nn_main.input_shape,
+                    hidden_shapes=[2 * nn_main.current_hidden_shapes[0], 1],
+                    include_small=True, loss="binary_crossentropy",
+                    learning_rate=0.001, activation="relu",
+                    )
+        else:
+            nn_neg = ActiveNeuralNetwork(
                 input_shape=nn_main.input_shape,
                 hidden_shapes=nn_main.current_hidden_shapes,
                 include_small=True, loss="binary_crossentropy",
@@ -328,7 +370,7 @@ def qdb_sampling_dependant(nn_main, sess_main, X_train, y_train, X_val, y_val,
     pred_neg, reduce_factor_neg = training_biased_nn(
         X_train, y_train, X_val, y_val, nn_neg, graph_neg, main_weights_path,
         biased_samples, False, (iteration != 3), False, nb_biased_epoch,
-        reduce_factor=reduce_factor_neg,
+        reduce_factor=reduce_factor_neg, doubleFilters=doubleFilters,
         )
     t3 = time.time()
 

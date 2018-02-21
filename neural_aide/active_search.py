@@ -33,7 +33,7 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                   reduce_factor=2., pool_size=None,
                   main_lr=0.001, nn_activation="relu",
                   nn_loss="binary_crossentropy",
-                  background_sampling="uncertain"):
+                  background_sampling="uncertain", doubleFilters=False):
     """
     Run the Query by disagreement search with neural networks.
     Params:
@@ -149,6 +149,11 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
             timer["total"].append(t - t0)
 
             logging.info("# Iteration %s #" % iteration)
+
+            if not evolutive_small:
+                reduce_factor_pos *= 0.9
+                reduce_factor_neg *= 0.9
+
             logging.info("reduce_factor pos %s neg %s" % (reduce_factor_pos,
                 reduce_factor_neg))
 
@@ -240,7 +245,8 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                                              nb_biased_epoch=nb_biased_epoch,
                                              reduce_factor_pos=reduce_factor_pos,
                                              reduce_factor_neg=reduce_factor_neg,
-                                             pool_size=pool_size)
+                                             pool_size=pool_size,
+                                             doubleFilters=doubleFilters)
                                 )
                         modif_pos = (reduce_factor_pos_new != reduce_factor_pos)
                         modif_neg = (reduce_factor_neg_new != reduce_factor_neg)
