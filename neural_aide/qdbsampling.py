@@ -50,24 +50,28 @@ def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
                 with open(weights_path, "r") as fp:
                     dico_saver = pickle.load(fp)
                 #W0
-                noise = np.random.normal(0, 0.0001, dico_saver["weights"]["W0"].shape)
+                noise = np.random.normal(0, 0.001, dico_saver["weights"]["W0"].shape)
                 dico_saver["weights"]["W0"] = np.hstack((
                     dico_saver["weights"]["W0"] + noise,
                     dico_saver["weights"]["W0"] - noise
                     ))
                 #b0
-                noise = np.random.normal(0, 0.0001, dico_saver["biases"]["b0"].shape)
+                noise = np.random.normal(0, 0.001, dico_saver["biases"]["b0"].shape)
                 dico_saver["biases"]["b0"] = np.concatenate((
                     dico_saver["biases"]["b0"] + noise,
                     dico_saver["biases"]["b0"] - noise
                 )) 
 
                 #W1
-                noise = np.random.normal(0, 0.0001, dico_saver["weights"]["W1"].shape)
+                noise = np.random.normal(0, 0.001, dico_saver["weights"]["W1"].shape)
                 dico_saver["weights"]["W1"] = np.vstack((
                     dico_saver["weights"]["W1"] + noise,
                     dico_saver["weights"]["W1"] - noise
                     ))
+
+                #b1
+                dico_saver["biases"]["b1"] *= 2
+
                 utils.loaderFromDict(nn.params, sess, dico_saver)
             else:
                 utils.loader(nn.params, sess, weights_path)

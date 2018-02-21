@@ -99,7 +99,8 @@ class ActiveNeuralNetwork():
                  X_val=None, y_val=None, n_epoch=100, callback=True,
                  saving=True, save_path="./model.ckpt", warmstart=False,
                  weights_path="./model.kpt", display_step=50, stop_at_1=False,
-                 nb_min_epoch=50, reduce_factor=1, increase_if_not_1=False):
+                 nb_min_epoch=50, reduce_factor=1, increase_if_not_1=False,
+                 decrease=True):
         """
         Train the model on given data.
 
@@ -135,7 +136,8 @@ class ActiveNeuralNetwork():
             dictionnary: If callback==True, return the callback.
                 Else, return an empty dictionnary
         """
-        self.decrease_complexity(sess)
+        if decrease and self.current_hidden_shapes[0]>3:
+            self.decrease_complexity(sess)
 
         total_X = X_train.copy()
         for X in [X_small, X_val]:
@@ -162,7 +164,7 @@ class ActiveNeuralNetwork():
 
         return callback
 
-    def decrease_complexity(self, sess, threshold=0.01):
+    def decrease_complexity(self, sess, threshold=0.001):
         """
         Merge units that are very close.
         """
@@ -252,29 +254,25 @@ class ActiveNeuralNetwork():
             dico_saver_new = {"weights": {}, "biases": {}}
 
             #W0
-            dico_saver_new["weights"]["W0"] = np.random.normal(
-                0,
-                0.001,
-                size=(self.input_shape, self.current_hidden_shapes[0])
-            )
-            dico_saver_new["weights"]["W0"][:, :old_shape] = dico_saver["weights"]["W0"]
-
+            noise = np.random.normal(0, 0.001, dico_saver["weights"]["W0"].shape)
+            dico_saver_new["weights"]["W0"] = np.hstack((
+                dico_saver["weights"]["W0"] + noise,
+                dico_saver["weights"]["W0"] - noise
+                ))
             #b0
-            dico_saver_new["biases"]["b0"] = np.zeros(self.current_hidden_shapes[0])
-            
-            dico_saver_new["biases"]["b0"][:old_shape] = dico_saver["biases"]["b0"]
+            noise = np.random.normal(0, 0.001, dico_saver["biases"]["b0"].shape)
+            dico_saver_new["biases"]["b0"] = np.concatenate((
+                dico_saver["biases"]["b0"] + noise,
+                dico_saver["biases"]["b0"] - noise
+            )) 
 
             #W1
-            dico_saver_new["weights"]["W1"] = np.random.normal(
-                0,
-                0.001,
-                size=(self.current_hidden_shapes[0], self.current_hidden_shapes[1])
-            )
-            dico_saver_new["weights"]["W1"][:old_shape, :] = dico_saver["weights"]["W1"]
-
-            #b1
-            dico_saver_new["biases"]["b1"] = dico_saver["biases"]["b1"]
-
+            noise = np.random.normal(0, 0.001, dico_saver["weights"]["W1"].shape)
+            dico_saver_new["weights"]["W1"] = np.vstack((
+                dico_saver["weights"]["W1"] + noise,
+                dico_saver["weights"]["W1"] - noise
+                ))
+            dico_saver_new["biases"]["b1"] = 2 * dico_saver["biases"]["b1"]
             
         
         self.nn = TrueActiveNN(

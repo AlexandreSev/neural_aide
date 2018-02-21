@@ -332,7 +332,7 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                         temp = nn_main.training(
                             sess_main, X_train, y_train, n_epoch=10000,
                             display_step=100000, saving=False, stop_at_1=True,
-                            callback=True,
+                            callback=True, decrease=False
                             )
                         if temp["training_error"][-1] != 1:
                             current_lr /= 10
