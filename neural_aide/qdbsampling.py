@@ -8,7 +8,7 @@ import tensorflow as tf
 
 from .sampling import find_k_most_uncertain
 from alex_library.tf_utils import utils
-from .active_nn import compute_score
+from .active_nn import compute_score, ActiveNeuralNetwork
 
 
 def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
@@ -193,6 +193,141 @@ def qdb_sampling(nn_main, sess_main, X_train, y_train, X_val, y_val, iteration,
     pred_neg, reduce_factor_neg = training_biased_nn(
         X_train, y_train, X_val, y_val, nn_neg, graph_neg, neg_weights_path,
         biased_samples, False, (iteration != 3), save, nb_biased_epoch,
+        reduce_factor=reduce_factor_neg,
+        )
+    t3 = time.time()
+
+    # Look at the samples differently predicted by the biased network
+    differences = ((pred_pos > 0.5) != (pred_neg > 0.5))
+    if random:
+        order = np.where(differences)[0]
+        np.random.shuffle(order)
+    else:
+        order = np.where(differences)[0]
+        temp = np.abs(
+            np.abs(pred_pos[order] - np.mean(pred_pos[order]))
+            + np.abs(pred_neg[order] - np.mean(pred_neg[order]))
+            ).reshape(-1)
+        order = order[np.argsort(temp)].reshape(-1)
+
+    logging.info("Number of differences between positive " +
+                 "and negative models: %s" % np.sum(differences))
+
+    # Find a sample in differences which is not already present
+    if len(order) > 0:
+        logging.debug("Here is order: " + str(order))
+        t4 = time.time()
+        timers = (t1-t0, t2-t1, t3-t2, t4-t3)
+        return (order[0], pred_pos, pred_neg, biased_samples, timers,
+            reduce_factor_pos, reduce_factor_neg)
+
+    # If the two models agree, choose the first biased point
+    t4 = time.time()
+    timers = (t1-t0, t2-t1, t3-t2, t4-t3)
+    return (biased_samples[0], pred_pos, pred_neg, biased_samples, timers,
+        reduce_factor_pos, reduce_factor_neg)
+
+def qdb_sampling_dependant(nn_main, sess_main, X_train, y_train, X_val, y_val,
+                           iteration, main_weights_path, random=False,
+                           save=True, evolutive_small=False,
+                           nb_background_points=None, nb_biased_epoch=10000,
+                           reduce_factor_pos=2, pool_size=None,
+                           reduce_factor_neg=2,
+                           background_sampling="uncertain"):
+    """
+    Find the next sample with query by disagreement.
+    Params:
+        nn_main (ActiveNeuralNetwork): Main nn of the active search.
+        sess_main (tf.Session): sessions associated with the nn.
+        X_train (np.array): Samples already labeled.
+        y_train (np.array): Labels of X_train.
+        X_val (np.array): Unlabeled samples.
+        y_val (np.array): Labels of X_val.
+        iteration (integer): number of the current iteration.
+        nn_pos (ActiveNeuralNetwork): positively biased nn.
+        graph_pos (tf.graph): graph associated to the nn_pos.
+        pos_weight_path (string): where to save positive weights.
+        nn_neg (ActiveNeuralNetwork): negatively biased nn.
+        graph_neg (tf.graph): graph associated to the nn_neg.
+        neg_weight_path (string): where to save negative weights.
+        random (boolean): If True, take a random sample in the disagreement
+            region. Else, take the most uncertain.
+        save (boolean): If True, will save weights of postive and negative nns.
+        evolutive_small (boolean): Choose if the number of background points
+            will change over time or not.
+        nb_biased_epoch (integer): Number of epoch to do at the first step
+        reduce_factor (real or string): The gradients of the biased sample will
+            be divided by this factor. If None, it will be equal to
+            len(biased_sample). If "evolutive", it will be equal to
+            len(biased_samples) * 2. / X_train.shape[0].
+        pool_size (integer): Size of the pool considered to find the most
+            uncertain point. If None, the whole X is used.
+        background_sampling (string). If "uncertain", background points will be
+            the most uncertain of the model. If "random", background points
+            will be randomly sampled.
+
+    Return:
+        (integer) indice of the new sample
+        (np.array) labels predicted by the postive model
+        (np.array) labels predicted by the negative model
+        (4-uple of float) time taken for each step
+    """
+
+    # Find background points
+    t0 = time.time()
+    
+    if evolutive_small:
+        if nb_background_points is None:
+            k = 2 * iteration
+        else:
+            k = nb_background_points * iteration
+    else:
+        if nb_background_points is None:
+            k = 200
+        else:
+            k = nb_background_points
+
+    if background_sampling == "uncertain":
+        biased_samples = find_k_most_uncertain(nn_main, sess_main, X_val,
+                                               k=k, pool_size=pool_size)
+    elif background_sampling == "random":
+        biased_samples = np.random.choice(X_val.shape[0], k, replace=False)
+
+
+    t1 = time.time()
+    # Training of biased nn.
+
+    graph_pos = tf.Graph()
+    with graph_pos.as_default():
+        nn_pos = ActiveNeuralNetwork(
+                input_shape=nn_main.input_shape,
+                hidden_shapes=nn_main.current_hidden_shapes,
+                include_small=True, loss="binary_crossentropy",
+                learning_rate=0.001, activation="relu",
+                )
+
+    # Train the positively-biased network
+    logging.info("Training positive model")
+    pred_pos, reduce_factor_pos = training_biased_nn(
+        X_train, y_train, X_val, y_val, nn_pos, graph_pos, main_weights_path,
+        biased_samples, True, (iteration != 3), False, nb_biased_epoch,
+        reduce_factor=reduce_factor_pos,
+        )
+    t2 = time.time()
+
+    graph_neg = tf.Graph()
+    with graph_neg.as_default():
+        nn_neg = ActiveNeuralNetwork(
+                input_shape=nn_main.input_shape,
+                hidden_shapes=nn_main.current_hidden_shapes,
+                include_small=True, loss="binary_crossentropy",
+                learning_rate=0.001, activation="relu",
+                )
+    # Train the negatively-biased netswork
+    logging.info("Training negative model")
+    pred_neg, reduce_factor_neg = training_biased_nn(
+        X_train, y_train, X_val, y_val, nn_neg, graph_neg, main_weights_path,
+        biased_samples, False, (iteration != 3), False, nb_biased_epoch,
         reduce_factor=reduce_factor_neg,
         )
     t3 = time.time()

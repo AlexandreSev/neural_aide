@@ -87,6 +87,9 @@ class ActiveNeuralNetwork():
 
         self.update_attributes()
 
+    def setLR(self, lr):
+        self.nn.setLR(lr)
+
     def update_attributes(self):
         self.prediction = self.nn.prediction
         self.input_tensor = self.nn.input_tensor

@@ -15,7 +15,7 @@ from .visualize_database import (plot_advancement_qdb_search,
                                  plot_advancement_uncertainty_search,
                                  random_uncertainty_plot)
 from .sampling import initial_sampling, uncertainty_sampling
-from .qdbsampling import qdb_sampling
+from .qdbsampling import qdb_sampling, qdb_sampling_dependant
 
 from alex_library.tf_utils import utils
 
@@ -109,13 +109,15 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
     reduce_factor_pos = reduce_factor
     reduce_factor_neg = reduce_factor
 
+    current_lr = main_lr
+
     with graph_main.as_default():
         nn_main = ActiveNeuralNetwork(
             input_shape=input_shape, hidden_shapes=shapes, batch_size=124,
             learning_rate=main_lr, activation=nn_activation, loss=nn_loss,
             )
 
-    if qdb:
+    if qdb and (pos_weights_path != main_weights_path):
          graph_pos = tf.Graph()
          graph_neg = tf.Graph()
  
@@ -212,20 +214,34 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                 while repeat:
                     repeat = False
                     if qdb:
-                        (sample, pred_pos, pred_neg, biased_samples, times,
-                            reduce_factor_pos_new, reduce_factor_neg_new) = (
-                            qdb_sampling(nn_main, sess_main, X_train, y_train,
-                                         X_val, y_val, iteration, nn_pos,
-                                         graph_pos, pos_weights_path, nn_neg,
-                                         graph_neg, neg_weights_path,
-                                         random=random, save=save_biased,
-                                         evolutive_small=evolutive_small,
-                                         nb_background_points=nb_background_points,
-                                         nb_biased_epoch=nb_biased_epoch,
-                                         reduce_factor_pos=reduce_factor_pos,
-                                         reduce_factor_neg=reduce_factor_neg,
-                                         pool_size=pool_size)
-                            )
+                        if (main_weights_path != pos_weights_path):
+                            (sample, pred_pos, pred_neg, biased_samples, times,
+                                reduce_factor_pos_new, reduce_factor_neg_new) = (
+                                qdb_sampling(nn_main, sess_main, X_train, y_train,
+                                             X_val, y_val, iteration, nn_pos,
+                                             graph_pos, pos_weights_path, nn_neg,
+                                             graph_neg, neg_weights_path,
+                                             random=random, save=save_biased,
+                                             evolutive_small=evolutive_small,
+                                             nb_background_points=nb_background_points,
+                                             nb_biased_epoch=nb_biased_epoch,
+                                             reduce_factor_pos=reduce_factor_pos,
+                                             reduce_factor_neg=reduce_factor_neg,
+                                             pool_size=pool_size)
+                                )
+                        else:
+                            (sample, pred_pos, pred_neg, biased_samples, times,
+                                reduce_factor_pos_new, reduce_factor_neg_new) = (
+                                qdb_sampling_dependant(nn_main, sess_main, X_train, y_train,
+                                             X_val, y_val, iteration, main_weights_path,
+                                             random=random, save=save_biased,
+                                             evolutive_small=evolutive_small,
+                                             nb_background_points=nb_background_points,
+                                             nb_biased_epoch=nb_biased_epoch,
+                                             reduce_factor_pos=reduce_factor_pos,
+                                             reduce_factor_neg=reduce_factor_neg,
+                                             pool_size=pool_size)
+                                )
                         modif_pos = (reduce_factor_pos_new != reduce_factor_pos)
                         modif_neg = (reduce_factor_neg_new != reduce_factor_neg)
 
@@ -305,16 +321,35 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                         nb_epoch_main *= 2
 
                     # adapt reduce_factor
+                    if modif_pos and modif_neg:
+                        nn_main.increase_complexity(sess_main)
+                        temp = nn_main.training(
+                            sess_main, X_train, y_train, n_epoch=10000,
+                            display_step=100000, saving=False, stop_at_1=True,
+                            callback=True,
+                            )
+                        if temp["training_error"][-1] != 1:
+                            current_lr /= 10
+                            nn_main.setLR(current_lr)
+                        if "%s" in main_weights_path:
+                            utils.saver(
+                                nn_main.params,
+                                sess_main,
+                                main_weights_path % iteration
+                                )
+                        else:
+                            utils.saver(nn_main.params, sess_main, main_weights_path)
+                        if main_weights_path != pos_weights_path:
+                            with tf.Session(graph_pos) as sess_pos:
+                                nn_pos.increase_complexity(sess_pos)
+                            with tf.Session(graph_neg) as sess_neg:
+                                nn_neg.increase_complexity(sess_neg)
+                if ((iteration>3) and ((callback["training_error"][-1] != 1) or 
+                        (callback["training_error"][-2] != 1))):
                     if modif_pos:
                         reduce_factor_pos /= 2.
                     if modif_neg:
                         reduce_factor_neg /= 2.
-                    if modif_pos and modif_neg:
-                        nn_main.increase_complexity(sess_main)
-                        with tf.Session(graph_pos) as sess_pos:
-                            nn_pos.increase_complexity(sess_pos)
-                        with tf.Session(graph_neg) as sess_neg:
-                            nn_neg.increase_complexity(sess_neg)
 
                 tbis = time.time()
                 timer["callback_treatment"].append(tbis - t)

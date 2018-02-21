@@ -75,7 +75,7 @@ class ActiveNeuralNetwork:
 
         self.sizes = [input_shape] + hidden_shapes
 
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
+        self.optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate)
 
         if loss in ["l2", "binary_crossentropy", "multiclass_crossentropy"]:
             self.loss_name = loss
@@ -97,6 +97,10 @@ class ActiveNeuralNetwork:
         self.include_small = include_small
 
         self.build()
+
+    def setLR(self, lr):
+        logging.info("LR set to %s" % lr)
+        self.optimizer = tf.train.RMSPropOptimizer(learning_rate=lr)
 
     def build(self):
         """
