@@ -7,14 +7,16 @@ import pickle
 import time
 import numpy as np
 
-from .active_nn import ActiveNeuralNetwork, compute_score
+from .adaptive.adaptive_nn import (ActiveNeuralNetwork,
+                                   compute_score,
+                                   TrueActiveNN)
 from .visualize_database import (plot_advancement_qdb_search,
                                  random_advancement_plot,
                                  plot_advancement_uncertainty_search,
                                  random_uncertainty_plot)
 from .sampling import initial_sampling, uncertainty_sampling
 from .qdbsampling import qdb_sampling
-from threesetsmetric import threesetsmanager
+
 from alex_library.tf_utils import utils
 
 
@@ -31,7 +33,7 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                   tsm_lim=None, reduce_factor=2., pool_size=None,
                   main_lr=0.001, nn_activation="relu",
                   nn_loss="binary_crossentropy",
-                  background_sampling="uncertain", loss_criteria=False):
+                  background_sampling="uncertain"):
     """
     Run the Query by disagreement search with neural networks.
     Params:
@@ -209,7 +211,7 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                     repeat = False
                     if qdb:
                         (sample, pred_pos, pred_neg, biased_samples, times,
-                            reduce_factor_pos, reduce_factor_neg) = (
+                            reduce_factor_pos_new, reduce_factor_neg_new) = (
                             qdb_sampling(nn_main, sess_main, X_train, y_train,
                                          X_val, y_val, iteration, nn_pos,
                                          graph_pos, pos_weights_path, nn_neg,
@@ -220,9 +222,13 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                                          nb_biased_epoch=nb_biased_epoch,
                                          reduce_factor_pos=reduce_factor_pos,
                                          reduce_factor_neg=reduce_factor_neg,
-                                         pool_size=pool_size,
-                                         loss_criteria=loss_criteria)
+                                         pool_size=pool_size)
                             )
+                        modif_pos = (reduce_factor_pos_new != reduce_factor_pos)
+                        modif_neg = (reduce_factor_neg_new != reduce_factor_neg)
+
+                        reduce_factor_pos = reduce_factor_pos_new
+                        reduce_factor_neg = reduce_factor_neg_new
 
                         for i, key in enumerate([
                                 "background_points", "pos_nn", "neg_nn",
@@ -268,8 +274,7 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                         temp = nn_main.training(
                             sess_main, X_train, y_train, n_epoch=nb_epoch_main,
                             display_step=100000, saving=False,
-                            stop_at_1=not loss_criteria, callback=True,
-                            loss_criteria=loss_criteria
+                            stop_at_1=True, callback=True
                             )
 
                         # Save the weights
@@ -298,12 +303,6 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                         val_score = compute_score(nn_main, X, y, sess_main)
 
                         logging.info("Validation F1 score: %s" % val_score)
-
-                if tsm:
-                    logging.info("Adding sample to tsm")
-                    tsm_object.add_sample(X_val[sample], y_val[sample])
-                    logging.info("Updating_new_regions")
-                    tsm_object.update_regions()
 
                 X_train = np.vstack((X_train,
                                      X_val[sample].reshape((1, -1))))
@@ -335,8 +334,8 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                 logging.info("Training main model")
                 temp = nn_main.training(
                     sess_main, X_train, y_train, n_epoch=nb_epoch_main,
-                    display_step=100000, saving=False, stop_at_1=not loss_criteria,
-                    callback=True, loss_criteria=loss_criteria
+                    display_step=100000, saving=False, stop_at_1=True,
+                    callback=True,
                     )
 
                 tbis = time.time()
@@ -366,6 +365,12 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                         nb_epoch_main = nb_max_main_epoch
                     else:
                         nb_epoch_main *= 2
+
+                    # adapt reduce_factor
+                    if modif_pos:
+                        reduce_factor_pos /= 2.
+                    if modif_neg:
+                        reduce_factor_neg /= 2.
 
                 tbis = time.time()
                 timer["callback_treatment"].append(tbis - t)

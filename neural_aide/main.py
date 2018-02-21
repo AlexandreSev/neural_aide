@@ -21,7 +21,9 @@ except Exception as e:
 
 from alex_library.commons_utils import logger_utils
 from alex_library.tf_utils import utils
-import neural_aide
+
+from .active_search import active_search
+from .utils_database import normalize_npy_database
 
 
 def create_query(query, data):
@@ -188,7 +190,7 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
     data = np.load(DATAPATH)
     logging.info("Data Shape: " + str(data.shape))
 
-    X = neural_aide.utils_database.normalize_npy_database(data)
+    X = normalize_npy_database(data)
 
     # Creation of the labels
     y = create_query(query, data)
@@ -225,7 +227,7 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
     neg_save_path = pjoin(SAVING_DIRECTORY, "weights_neg.pckl")
 
     if use_main_weights:
-        neural_aide.active_search.active_search(
+        active_search(
             X, y, shapes=shapes, max_iterations=501,
             pos_weights_path=main_weights_path,
             neg_weights_path=main_weights_path,
@@ -244,7 +246,7 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
             background_sampling=background_sampling
         )
     else:
-        neural_aide.active_search.active_search(
+        active_search(
             X, y, shapes=shapes, max_iterations=501,
             pos_weights_path=pos_save_path,
             neg_weights_path=neg_save_path,
