@@ -151,8 +151,8 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
             logging.info("# Iteration %s #" % iteration)
 
             if not evolutive_small:
-                reduce_factor_pos *= 0.9
-                reduce_factor_neg *= 0.9
+                reduce_factor_pos = max(1, reduce_factor_pos * 0.9)
+                reduce_factor_neg = max(1, reduce_factor_neg * 0.9)
 
             logging.info("reduce_factor pos %s neg %s" % (reduce_factor_pos,
                 reduce_factor_neg))
@@ -335,8 +335,13 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                             callback=True, decrease=False
                             )
                         if temp["training_error"][-1] != 1:
-                            current_lr /= 10
-                            nn_main.setLR(current_lr)
+                            logging.info("RESET !")
+                            sess_main.run(tf.global_variables_initializer())
+                            temp = nn_main.training(
+                                sess_main, X_train, y_train, n_epoch=10000,
+                                display_step=100000, saving=False, stop_at_1=True,
+                                callback=True, decrease=False
+                            )
                         if "%s" in main_weights_path:
                             utils.saver(
                                 nn_main.params,

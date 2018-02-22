@@ -258,21 +258,21 @@ class ActiveNeuralNetwork():
             dico_saver_new["weights"]["W0"] = np.hstack((
                 dico_saver["weights"]["W0"] + noise,
                 dico_saver["weights"]["W0"] - noise
-                ))
+                ))  / 2.
             #b0
             noise = np.random.normal(0, 0.001, dico_saver["biases"]["b0"].shape)
             dico_saver_new["biases"]["b0"] = np.concatenate((
                 dico_saver["biases"]["b0"] + noise,
                 dico_saver["biases"]["b0"] - noise
-            )) 
+            )) / 2.
 
             #W1
             noise = np.random.normal(0, 0.001, dico_saver["weights"]["W1"].shape)
             dico_saver_new["weights"]["W1"] = np.vstack((
                 dico_saver["weights"]["W1"] + noise,
                 dico_saver["weights"]["W1"] - noise
-                ))
-            dico_saver_new["biases"]["b1"] = 2 * dico_saver["biases"]["b1"]
+                ))  / 2.
+            dico_saver_new["biases"]["b1"] = dico_saver["biases"]["b1"]
             
         
         self.nn = TrueActiveNN(
