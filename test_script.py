@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # coding: utf-8
 
-from ..neural_aide import main
+from neural_aide import main
 import logging
 import traceback
 from os.path import join as pjoin
