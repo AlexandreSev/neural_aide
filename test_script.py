@@ -35,6 +35,7 @@ main.run_experiment_with_sdss(
     tf_seed=7,
     saving_dir=".",
     max_iter=10,
+    log_into_file=False
     )
 
 
