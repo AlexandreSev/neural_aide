@@ -151,8 +151,8 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
             logging.info("# Iteration %s #" % iteration)
 
             if not evolutive_small:
-                reduce_factor_pos = max(1, reduce_factor_pos * 0.9)
-                reduce_factor_neg = max(1, reduce_factor_neg * 0.9)
+                reduce_factor_pos = min(max(1, reduce_factor_pos * 0.9), 200)
+                reduce_factor_neg = min(max(1, reduce_factor_neg * 0.9), 200)
 
             logging.info("reduce_factor pos %s neg %s" % (reduce_factor_pos,
                 reduce_factor_neg))
@@ -338,7 +338,7 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                             logging.info("RESET !")
                             sess_main.run(tf.global_variables_initializer())
                             temp = nn_main.training(
-                                sess_main, X_train, y_train, n_epoch=10000,
+                                sess_main, X_train, y_train, n_epoch=100000,
                                 display_step=100000, saving=False, stop_at_1=True,
                                 callback=True, decrease=False
                             )

@@ -228,6 +228,11 @@ def qdb_sampling(nn_main, sess_main, X_train, y_train, X_val, y_val, iteration,
 
     # Look at the samples differently predicted by the biased network
     differences = ((pred_pos > 0.5) != (pred_neg > 0.5))
+
+    if len(differences) < k:
+        reduce_factor_pos /= 10
+        reduce_factor_neg /= 10
+
     if random:
         order = np.where(differences)[0]
         np.random.shuffle(order)
@@ -380,6 +385,13 @@ def qdb_sampling_dependant(nn_main, sess_main, X_train, y_train, X_val, y_val,
 
     # Look at the samples differently predicted by the biased network
     differences = ((pred_pos > 0.5) != (pred_neg > 0.5))
+    print(np.sum(differences))
+    if np.sum(differences) < k:
+        logging.info("HERE")
+        reduce_factor_pos /= 10
+        reduce_factor_neg /= 10
+        
+
     if random:
         order = np.where(differences)[0]
         np.random.shuffle(order)

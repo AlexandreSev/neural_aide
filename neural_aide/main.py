@@ -67,7 +67,7 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
                              main_lr=0.001, nn_activation="relu",
                              nn_loss="binary_crossentropy",
                              background_sampling="uncertain",
-                             doubleFilters=False):
+                             doubleFilters=False, max_iter=501):
     """
     Run the active search.
     Params:
@@ -229,7 +229,7 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
 
     if use_main_weights:
         active_search(
-            X, y, shapes=shapes, max_iterations=501,
+            X, y, shapes=shapes, max_iterations=max_iter,
             pos_weights_path=main_weights_path,
             neg_weights_path=main_weights_path,
             main_weights_path=main_weights_path,
@@ -249,7 +249,7 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
         )
     else:
         active_search(
-            X, y, shapes=shapes, max_iterations=501,
+            X, y, shapes=shapes, max_iterations=max_iter,
             pos_weights_path=pos_save_path,
             neg_weights_path=neg_save_path,
             main_weights_path=main_weights_path,
