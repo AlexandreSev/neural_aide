@@ -33,8 +33,7 @@ main.run_experiment_with_sdss(
     background_sampling=configuration["BACKGROUND_SAMPLING"],
     np_seed=42,
     tf_seed=7,
-    saving_dir=pjoin(configuration["RESSOURCES_FOLDER"],
-                     "results", "baseline"),
+    saving_dir=".",
     max_iter=10,
     )
 
