@@ -221,7 +221,7 @@ def initialize_logger(log_file=None, filemode="a"):
     args = parser.parse_args()
 
     # Verify each argument
-    numeric_level = getattr(logging, args.log.upper(), None)
+    numeric_level = getattr(logging, args.log.upper(), logging.INFO)
     if not isinstance(numeric_level, int):
         raise ValueError('Invalid log level: %s' % args.log)
 
