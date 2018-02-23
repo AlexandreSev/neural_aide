@@ -35,7 +35,6 @@ main.run_experiment_with_sdss(
     tf_seed=7,
     saving_dir=pjoin(configuration["RESSOURCES_FOLDER"],
                      "results", "baseline"),
-    doubleFilters=True,
     max_iter=10,
     )
 
