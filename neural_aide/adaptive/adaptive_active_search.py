@@ -15,7 +15,7 @@ from ..visualize_database import (plot_advancement_qdb_search,
 from ..sampling import initial_sampling, uncertainty_sampling
 from .adaptive_qdbsampling import qdb_sampling
 from ..threesetsmetric import threesetsmanager
-import tf_utils as utils
+from ..tf_utils import saver, loader
 
 
 def active_search(X, y, shapes=[64, 1], max_iterations=501,
@@ -173,13 +173,13 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                                             stop_at_1=True, saving=False)
 
                 if "%s" in main_weights_path:
-                    utils.saver(
+                    saver(
                         nn_main.params,
                         sess_main,
                         main_weights_path % iteration
                         )
                 else:
-                    utils.saver(nn_main.params, sess_main, main_weights_path)
+                    saver(nn_main.params, sess_main, main_weights_path)
 
                 callback["samples"] = samples
                 # Initialize tsm
@@ -278,13 +278,13 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
 
                         # Save the weights
                         if "%s" in main_weights_path:
-                            utils.saver(
+                            saver(
                                 nn_main.params,
                                 sess_main,
                                 main_weights_path % iteration
                                 )
                         else:
-                            utils.saver(nn_main.params, sess_main,
+                            saver(nn_main.params, sess_main,
                                         main_weights_path)
 
                         callback["training_error"].append(
@@ -339,7 +339,7 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
 
                 if reset_filters:
                     nn_main.resetFilters(main_weights_path)
-                    utils.loader(nn_main.params, sess_main, main_weights_path)
+                    loader(nn_main.params, sess_main, main_weights_path)
                 logging.info("Training main model")
                 temp = nn_main.training(
                     sess_main, X_train, y_train, n_epoch=nb_epoch_main,
@@ -353,13 +353,13 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
 
                 # Save the weights
                 if "%s" in main_weights_path:
-                    utils.saver(
+                    saver(
                         nn_main.params,
                         sess_main,
                         main_weights_path % iteration
                         )
                 else:
-                    utils.saver(nn_main.params, sess_main, main_weights_path)
+                    saver(nn_main.params, sess_main, main_weights_path)
 
                 tbis = time.time()
                 timer["saving_weights"].append(tbis - t)

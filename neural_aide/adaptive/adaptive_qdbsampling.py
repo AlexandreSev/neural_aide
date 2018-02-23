@@ -8,7 +8,7 @@ import tensorflow as tf
 import pickle
 
 from ..sampling import find_k_most_uncertain
-import tf_utils as utils
+from ..tf_utils import loaderFromDict, saver
 
 from ..active_nn import ActiveNeuralNetwork
 
@@ -60,7 +60,7 @@ def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
                 dico_saver["weights"]["W1"],
                 np.random.normal(0, 0.001, (1, nn.sizes[2]))
                 ))
-            utils.loaderFromDict(nn.params, sess, dico_saver)
+            loaderFromDict(nn.params, sess, dico_saver)
         else:
             # if we don't use previous weights, it is the first training of the
             # biased nns. We increase the number of epochs in these case to
@@ -110,7 +110,7 @@ def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
 
         # Save the weights for the next iteration
         if save:
-            utils.saver(nn.params, sess, weights_path)
+            saver(nn.params, sess, weights_path)
     return pred
 
 

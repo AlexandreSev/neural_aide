@@ -4,7 +4,8 @@
 import logging
 import numpy as np
 import tensorflow as tf
-import tf_utils as utils
+
+from ..tf_utils import saver, loaderFromDict
 from ..active_nn import ActiveNeuralNetwork as TrueActiveNN
 
 
@@ -171,7 +172,7 @@ class ActiveNeuralNetwork():
 
         toDelete = []
 
-        dico_saver = utils.saver(self.nn.params, sess)
+        dico_saver = saver(self.nn.params, sess)
         
         current_W = np.vstack((
             dico_saver["weights"]["W0"],
@@ -233,7 +234,7 @@ class ActiveNeuralNetwork():
             sess.run(tf.global_variables_initializer())
             self.update_attributes()
 
-            utils.loaderFromDict(self.nn.params, sess, dico_saver)
+            loaderFromDict(self.nn.params, sess, dico_saver)
 
 
     def increase_complexity(self, sess, loadPreviousWeights=True):
@@ -250,7 +251,7 @@ class ActiveNeuralNetwork():
         # Load the previous weights
         if loadPreviousWeights:
 
-            dico_saver = utils.saver(self.nn.params, sess)
+            dico_saver = saver(self.nn.params, sess)
             dico_saver_new = {"weights": {}, "biases": {}}
 
             #W0
@@ -284,7 +285,7 @@ class ActiveNeuralNetwork():
         self.update_attributes()
 
         if loadPreviousWeights:
-            utils.loaderFromDict(self.nn.params, sess, dico_saver_new)
+            loaderFromDict(self.nn.params, sess, dico_saver_new)
 
     def test_dead_units(self, sess, X):
 
@@ -299,7 +300,7 @@ class ActiveNeuralNetwork():
 
         toDelete = np.where(hidden_sum==0)[0]
 
-        dico_saver = utils.saver(self.nn.params, sess)
+        dico_saver = saver(self.nn.params, sess)
         
         current_W = np.vstack((
             dico_saver["weights"]["W0"],
@@ -333,7 +334,7 @@ class ActiveNeuralNetwork():
             sess.run(tf.global_variables_initializer())
             self.update_attributes()
 
-            utils.loaderFromDict(self.nn.params, sess, dico_saver)
+            loaderFromDict(self.nn.params, sess, dico_saver)
 
 
 

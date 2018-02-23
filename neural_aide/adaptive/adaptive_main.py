@@ -19,8 +19,7 @@ try:
 except Exception as e:
     pass
 
-from alex_library.commons_utils import logger_utils
-from alex_library.tf_utils import utils
+from ..tf_utils import initialize_logger
 
 from adaptive_active_search import active_search
 from neural_aide.utils_database import normalize_npy_database
@@ -148,7 +147,7 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
     logging.shutdown()
     reload(logging)
     log_file = (pjoin(SAVING_DIRECTORY, "log.log"))
-    logger_utils.initialize_logger(log_file, filemode="w")
+    initialize_logger(log_file, filemode="w")
 
     # Fix the seeds
     if np_seed is None:
@@ -350,7 +349,7 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
     logging.shutdown()
     reload(logging)
     log_file = (pjoin(SAVING_DIRECTORY, "log.log"))
-    logger_utils.initialize_logger(log_file, filemode="w")
+    initialize_logger(log_file, filemode="w")
 
     # Fix the seeds
     if np_seed is None:
