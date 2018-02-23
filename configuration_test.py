@@ -1,5 +1,5 @@
 configuration = {
-	"RESSOURCES_FOLDER": "..",
+	"RESSOURCES_FOLDER": ".",
 	"QDB": True,
 	"RANDOM": True,
 	"SHAPES": [16, 16, 1],
