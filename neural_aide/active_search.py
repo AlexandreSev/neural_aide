@@ -16,8 +16,7 @@ from .visualize_database import (plot_advancement_qdb_search,
                                  random_uncertainty_plot)
 from .sampling import initial_sampling, uncertainty_sampling
 from .qdbsampling import qdb_sampling, qdb_sampling_dependant
-
-from alex_library.tf_utils import utils
+import tf_utils as utils
 
 
 def active_search(X, y, shapes=[64, 1], max_iterations=501,

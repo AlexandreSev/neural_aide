@@ -19,11 +19,10 @@ try:
 except Exception as e:
     pass
 
-from alex_library.commons_utils import logger_utils
-from alex_library.tf_utils import utils
-
 from .active_search import active_search
 from .utils_database import normalize_npy_database
+import tf_utils as utils
+
 
 
 def create_query(query, data):
@@ -67,7 +66,8 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
                              main_lr=0.001, nn_activation="relu",
                              nn_loss="binary_crossentropy",
                              background_sampling="uncertain",
-                             doubleFilters=False, max_iter=501):
+                             doubleFilters=False, max_iter=501,
+                             log_into_file=True):
     """
     Run the active search.
     Params:
@@ -147,8 +147,11 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
     # Configurate logger
     logging.shutdown()
     reload(logging)
-    log_file = (pjoin(SAVING_DIRECTORY, "log.log"))
-    logger_utils.initialize_logger(log_file, filemode="w")
+    if log_into_file:
+        log_file = (pjoin(SAVING_DIRECTORY, "log.log"))
+    else:
+        log_file = None
+    utils.initialize_logger(log_file, filemode="w")
 
     # Fix the seeds
     if np_seed is None:
@@ -278,7 +281,7 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
                                 tf_seed=None, main_lr=0.001,
                                 nn_activation="relu",
                                 nn_loss="binary_crossentropy",
-                                background_sampling="uncertain"):
+                                background_sampling="uncertain", max_iter=11):
     """
     Run the active search.
     Params:
@@ -351,7 +354,7 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
     logging.shutdown()
     reload(logging)
     log_file = (pjoin(SAVING_DIRECTORY, "log.log"))
-    logger_utils.initialize_logger(log_file, filemode="w")
+    utils.initialize_logger(log_file, filemode="w")
 
     # Fix the seeds
     if np_seed is None:
@@ -418,7 +421,7 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
 
     if use_main_weights:
         neural_aide.active_search.active_search(
-            X, y, shapes=shapes, max_iterations=501,
+            X, y, shapes=shapes, max_iterations=max_iter,
             pos_weights_path=main_weights_path,
             neg_weights_path=main_weights_path,
             main_weights_path=main_weights_path,
@@ -435,7 +438,7 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
         )
     else:
         neural_aide.active_search.active_search(
-            X, y, shapes=shapes, max_iterations=501,
+            X, y, shapes=shapes, max_iterations=max_iter,
             pos_weights_path=pos_save_path,
             neg_weights_path=neg_save_path,
             main_weights_path=main_weights_path,
