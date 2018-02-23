@@ -98,6 +98,10 @@ class ActiveNeuralNetwork:
 
         self.build()
 
+    def setLR(self, lr):
+        logging.info("LR set to %s" % lr)
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=lr)
+
     def build(self):
         """
         Lead the construction of the tensorflow graph by calling appropriate
@@ -253,7 +257,7 @@ class ActiveNeuralNetwork:
                  X_val=None, y_val=None, n_epoch=100, callback=True,
                  saving=True, save_path="./model.ckpt", warmstart=False,
                  weights_path="./model.kpt", display_step=50, stop_at_1=False,
-                 nb_min_epoch=50, reduce_factor=1):
+                 nb_min_epoch=50, reduce_factor=1, loss_criteria=False):
         """
         Train the model on given data.
 
@@ -301,7 +305,7 @@ class ActiveNeuralNetwork:
             best_n_epoch = None
 
         dico_callback = {"training_error": [], "validation_error": [],
-                         "testing_error": []}
+                         "testing_error": [], "loss": []}
 
         # Loop over epochs
         for nb_epoch in range(1, n_epoch + 1):
@@ -319,8 +323,15 @@ class ActiveNeuralNetwork:
                 if dico_callback["training_error"][-1] == 1:
                     break
 
+            if loss_criteria and len(dico_callback["loss"])>20:
+                l = np.array(dico_callback["loss"][-20:])
+                if (np.mean( ((l - np.roll(l, 1))[1:] > 0) - 0.5))>0:
+                    break
+
+
         self.display(nb_epoch, sess, X_train, y_train, X_small, y_small, X_val,
-                     y_val, best_val_error, best_n_epoch)
+                     y_val, best_val_error, best_n_epoch,
+                     loss=dico_callback["loss"][-1])
 
         if callback:
             return dico_callback
@@ -385,6 +396,7 @@ class ActiveNeuralNetwork:
         feed_dict_temp[self.true_labels] = y_train[(i+1) * self.batch_size:]
 
         sess.run(self.training_step, feed_dict=feed_dict_temp)
+        loss_tmp = sess.run(self.loss, feed_dict=feed_dict_temp)
 
         if (X_small is not None) and (y_small is not None):
             feed_dict_temp = feed_dict
@@ -393,6 +405,12 @@ class ActiveNeuralNetwork:
             feed_dict_temp[self.reduce_factor] = reduce_factor
 
             sess.run(self.apply_small_gradients, feed_dict=feed_dict_temp)
+            loss_tmp = np.concatenate((
+                loss_tmp,
+                sess.run(self.loss, feed_dict=feed_dict_temp) / reduce_factor,
+                ))
+
+        dico_callback["loss"].append(np.sum(loss_tmp))
 
         if (X_val is not None) & (y_val is not None):
             val_error = compute_accuracy(self, X_val, y_val, sess)
@@ -420,13 +438,14 @@ class ActiveNeuralNetwork:
 
         if nb_epoch % display_step == 0:
             self.display(nb_epoch, sess, X_train, y_train, X_small, y_small,
-                         X_val, y_val, best_val_error, best_n_epoch)
+                         X_val, y_val, best_val_error, best_n_epoch,
+                         loss=dico_callback["loss"][-1])
 
         return (dico_callback, best_val_error, best_n_epoch)
 
     def display(self, nb_epoch, sess, X_train, y_train, X_small=None,
                 y_small=None, X_val=None, y_val=None, best_val_error=None,
-                best_n_epoch=None):
+                best_n_epoch=None, loss=None):
         """
         Display some usefull information
 
@@ -460,7 +479,8 @@ class ActiveNeuralNetwork:
             logging.info("Best model: %s epochs with Score %s" % (
                 best_n_epoch, best_val_error
             ))
-
+        if loss is not None:
+            logging.info("Current loss: %s" % loss)
 
 if __name__ == "__main__":
     logging.basicConfig(level=10)

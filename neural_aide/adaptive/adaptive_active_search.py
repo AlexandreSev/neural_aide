@@ -7,16 +7,15 @@ import pickle
 import time
 import numpy as np
 
-from .adaptive.adaptive_nn import (ActiveNeuralNetwork,
-                                   compute_score,
-                                   TrueActiveNN)
-from .visualize_database import (plot_advancement_qdb_search,
+from .adaptive_nn import ActiveNeuralNetwork, compute_score, TrueActiveNN
+from ..visualize_database import (plot_advancement_qdb_search,
                                  random_advancement_plot,
                                  plot_advancement_uncertainty_search,
                                  random_uncertainty_plot)
-from .sampling import initial_sampling, uncertainty_sampling
-from .qdbsampling import qdb_sampling, qdb_sampling_dependant
-import tf_utils as utils
+from ..sampling import initial_sampling, uncertainty_sampling
+from .adaptive_qdbsampling import qdb_sampling
+from ..threesetsmetric import threesetsmanager
+from ..tf_utils import saver, loader
 
 
 def active_search(X, y, shapes=[64, 1], max_iterations=501,
@@ -27,12 +26,12 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                   callback_save_path=None, nb_max_main_epoch=64000, qdb=True,
                   random=True, xlim=None, ylim=None, timer_save_path=None,
                   save_biased=True, include_background=False,
-                  evolutive_small=False, nb_background_points=None,
-                  nb_biased_epoch=10000, biased_lr=0.001,
-                  reduce_factor=2., pool_size=None,
-                  main_lr=0.001, nn_activation="relu",
-                  nn_loss="binary_crossentropy",
-                  background_sampling="uncertain", doubleFilters=False):
+                  evolutive_small=False, nb_biased_epoch=10000,
+                  biased_lr=0.001, tsm=False, tsm_lim=None,
+                  reduce_factor=None, pool_size=None, main_lr=0.001,
+                  nn_activation="relu", nn_loss="binary_crossentropy",
+                  background_sampling="uncertain", reset_filters=False,
+                  initial_samples=None):
     """
     Run the Query by disagreement search with neural networks.
     Params:
@@ -78,9 +77,11 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
         main_lr (real): Learning rate of the main model.
         nn_activation (string): activation functions of the neural networks
         nn_loss (string): loss of the neural networks
-        background_sampling (string). If "uncertain", background points will be
+        background_sampling (string): If "uncertain", background points will be
             the most uncertain of the model. If "random", background points
             will be randomly sampled.
+        reset_filters (bool): If True, the filters will be reset when they are
+            to close together.
     """
 
     # Initialize variables
@@ -105,31 +106,27 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
     graph_main = tf.Graph()
     input_shape = X.shape[1]
 
-    reduce_factor_pos = reduce_factor
-    reduce_factor_neg = reduce_factor
-
-    current_lr = main_lr
-
     with graph_main.as_default():
         nn_main = ActiveNeuralNetwork(
             input_shape=input_shape, hidden_shapes=shapes, batch_size=124,
             learning_rate=main_lr, activation=nn_activation, loss=nn_loss,
             )
+    if qdb:
+        graph_pos = tf.Graph()
+        graph_neg = tf.Graph()
 
-    if qdb and (pos_weights_path != main_weights_path):
-         graph_pos = tf.Graph()
-         graph_neg = tf.Graph()
- 
-         with graph_pos.as_default():
-             nn_pos = ActiveNeuralNetwork(
-            input_shape=input_shape, hidden_shapes=shapes, batch_size=124,
-            learning_rate=main_lr, activation=nn_activation, loss=nn_loss,
-            )
-         with graph_neg.as_default():
-             nn_neg = ActiveNeuralNetwork(
-            input_shape=input_shape, hidden_shapes=shapes, batch_size=124,
-            learning_rate=main_lr, activation=nn_activation, loss=nn_loss,
-            )
+        with graph_pos.as_default():
+            nn_pos = TrueActiveNN(
+                input_shape=input_shape, hidden_shapes=shapes, batch_size=124,
+                include_small=include_background, loss=nn_loss,
+                learning_rate=biased_lr, activation=nn_activation,
+                )
+        with graph_neg.as_default():
+            nn_neg = TrueActiveNN(
+                input_shape=input_shape, hidden_shapes=shapes, batch_size=124,
+                loss=nn_loss, include_small=include_background,
+                learning_rate=biased_lr, activation=nn_activation,
+                )
 
     with tf.Session(graph=graph_main) as sess_main:
 
@@ -149,18 +146,15 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
 
             logging.info("# Iteration %s #" % iteration)
 
-            if not evolutive_small:
-                reduce_factor_pos = min(max(1, reduce_factor_pos * 0.9), 200)
-                reduce_factor_neg = min(max(1, reduce_factor_neg * 0.9), 200)
-
-            logging.info("reduce_factor pos %s neg %s" % (reduce_factor_pos,
-                reduce_factor_neg))
-
             # Test if it is the first iteration
             if iteration == 2:
 
                 # Randomly sample one positive and one negative example
-                samples = initial_sampling(y)
+                if initial_samples is None:
+                    samples = initial_sampling(y)
+                else:
+                    samples = initial_samples
+
                 X_train, y_train = X[samples], y[samples]
 
                 uncertain_samples = range(X.shape[0])
@@ -175,19 +169,26 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
 
                 # Train the neural network
                 callback = nn_main.training(sess_main, X_train, y_train,
-                                            n_epoch=100000, display_step=1000,
+                                            n_epoch=100000, display_step=100,
                                             stop_at_1=True, saving=False)
 
                 if "%s" in main_weights_path:
-                    utils.saver(
+                    saver(
                         nn_main.params,
                         sess_main,
                         main_weights_path % iteration
                         )
                 else:
-                    utils.saver(nn_main.params, sess_main, main_weights_path)
+                    saver(nn_main.params, sess_main, main_weights_path)
 
                 callback["samples"] = samples
+                # Initialize tsm
+                if tsm:
+                    tsm_object = threesetsmanager.ThreeSetsManager(
+                        X_train, y_train, None, tsm_lim,
+                        lower_bounds=np.min(X_val, axis=0),
+                        upper_bounds=np.max(X_val, axis=0)
+                        )
 
                 tbis = time.time()
                 timer["main_nn"].append(tbis - t)
@@ -218,40 +219,15 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                 while repeat:
                     repeat = False
                     if qdb:
-                        if (main_weights_path != pos_weights_path):
-                            (sample, pred_pos, pred_neg, biased_samples, times,
-                                reduce_factor_pos_new, reduce_factor_neg_new) = (
-                                qdb_sampling(nn_main, sess_main, X_train, y_train,
-                                             X_val, y_val, iteration, nn_pos,
-                                             graph_pos, pos_weights_path, nn_neg,
-                                             graph_neg, neg_weights_path,
-                                             random=random, save=save_biased,
-                                             evolutive_small=evolutive_small,
-                                             nb_background_points=nb_background_points,
-                                             nb_biased_epoch=nb_biased_epoch,
-                                             reduce_factor_pos=reduce_factor_pos,
-                                             reduce_factor_neg=reduce_factor_neg,
-                                             pool_size=pool_size)
-                                )
-                        else:
-                            (sample, pred_pos, pred_neg, biased_samples, times,
-                                reduce_factor_pos_new, reduce_factor_neg_new) = (
-                                qdb_sampling_dependant(nn_main, sess_main, X_train, y_train,
-                                             X_val, y_val, iteration, main_weights_path,
-                                             random=random, save=save_biased,
-                                             evolutive_small=evolutive_small,
-                                             nb_background_points=nb_background_points,
-                                             nb_biased_epoch=nb_biased_epoch,
-                                             reduce_factor_pos=reduce_factor_pos,
-                                             reduce_factor_neg=reduce_factor_neg,
-                                             pool_size=pool_size,
-                                             doubleFilters=doubleFilters)
-                                )
-                        modif_pos = (reduce_factor_pos_new != reduce_factor_pos)
-                        modif_neg = (reduce_factor_neg_new != reduce_factor_neg)
-
-                        reduce_factor_pos = reduce_factor_pos_new
-                        reduce_factor_neg = reduce_factor_neg_new
+                        sample, pred_pos, pred_neg, biased_samples, times = (
+                            qdb_sampling(nn_main, sess_main, X_train, y_train,
+                                         X_val, y_val, iteration, main_weights_path,
+                                         random=random, save=save_biased,
+                                         evolutive_small=evolutive_small,
+                                         nb_biased_epoch=nb_biased_epoch,
+                                         reduce_factor=reduce_factor,
+                                         pool_size=pool_size)
+                            )
 
                         for i, key in enumerate([
                                 "background_points", "pos_nn", "neg_nn",
@@ -262,6 +238,76 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                         sample = uncertainty_sampling(nn_main, sess_main,
                                                       X_val,
                                                       pool_size=pool_size)
+
+                    if (tsm and
+                            (tsm_object.get_label(X_val[sample]) is not None)):
+                        X_train = np.vstack((X_train,
+                                             X_val[sample].reshape((1, -1))))
+                        y_train = np.vstack((
+                            y_train, np.array([tsm_object.get_label(
+                                               X_train[-1]
+                                               )]).reshape((1, 1))
+                            ))
+
+                        if qdb:
+                            if samples == 0:
+                                biased_samples = [i - 1
+                                                  for i in biased_samples]
+                            elif sample != (X_val.shape[0] - 1):
+                                biased_samples = [i - 1 if i > sample else i
+                                                  for i
+                                                  in biased_samples]
+
+                            for variable in [X_val, y_val, pred_pos, pred_neg,
+                                             old_pred]:
+                                variable = np.delete(variable, sample, 0)
+                        else:
+                            for variable in [X_val, y_val]:
+                                variable = np.delete(variable, sample, 0)
+
+                        logging.info("I REPEAT !!!!!")
+                        logging.info("Training main model with falsy new " +
+                                     "sample !")
+                        logging.info("Label of the new_sample: %s"
+                                     % y_train[-1])
+                        temp = nn_main.training(
+                            sess_main, X_train, y_train, n_epoch=nb_epoch_main,
+                            display_step=100000, saving=False, stop_at_1=True,
+                            callback=True
+                            )
+
+                        # Save the weights
+                        if "%s" in main_weights_path:
+                            saver(
+                                nn_main.params,
+                                sess_main,
+                                main_weights_path % iteration
+                                )
+                        else:
+                            saver(nn_main.params, sess_main,
+                                        main_weights_path)
+
+                        callback["training_error"].append(
+                            temp["training_error"][-1]
+                            )
+
+                        # If the model did not converge, increase maximum
+                        # training time next time.
+                        if (callback["training_error"][-1] != 1):
+                            if (2 * nb_epoch_main) >= nb_max_main_epoch:
+                                nb_epoch_main = nb_max_main_epoch
+                            else:
+                                nb_epoch_main *= 2
+                        repeat = True
+                        val_score = compute_score(nn_main, X, y, sess_main)
+
+                        logging.info("Validation F1 score: %s" % val_score)
+
+                if tsm:
+                    logging.info("Adding sample to tsm")
+                    tsm_object.add_sample(X_val[sample], y_val[sample])
+                    logging.info("Updating_new_regions")
+                    tsm_object.update_regions()
 
                 X_train = np.vstack((X_train,
                                      X_val[sample].reshape((1, -1))))
@@ -290,11 +336,15 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                 logging.info("New sample is %s" % bool(y_train[-1]))
 
                 # Train the main nn with the new samples
+
+                if reset_filters:
+                    nn_main.resetFilters(main_weights_path)
+                    loader(nn_main.params, sess_main, main_weights_path)
                 logging.info("Training main model")
                 temp = nn_main.training(
                     sess_main, X_train, y_train, n_epoch=nb_epoch_main,
                     display_step=100000, saving=False, stop_at_1=True,
-                    callback=True,
+                    callback=True
                     )
 
                 tbis = time.time()
@@ -303,13 +353,13 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
 
                 # Save the weights
                 if "%s" in main_weights_path:
-                    utils.saver(
+                    saver(
                         nn_main.params,
                         sess_main,
                         main_weights_path % iteration
                         )
                 else:
-                    utils.saver(nn_main.params, sess_main, main_weights_path)
+                    saver(nn_main.params, sess_main, main_weights_path)
 
                 tbis = time.time()
                 timer["saving_weights"].append(tbis - t)
@@ -319,47 +369,11 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
 
                 # If the model did not converge, increase maximum training time
                 # next time
-                if (callback["training_error"][-1] < 0.95):
+                if (callback["training_error"][-1] != 1):
                     if (2 * nb_epoch_main) >= nb_max_main_epoch:
                         nb_epoch_main = nb_max_main_epoch
                     else:
                         nb_epoch_main *= 2
-
-                    # adapt reduce_factor
-                    if modif_pos and modif_neg:
-                        nn_main.increase_complexity(sess_main)
-                        temp = nn_main.training(
-                            sess_main, X_train, y_train, n_epoch=nb_epoch_main * 10,
-                            display_step=100000, saving=False, stop_at_1=True,
-                            callback=True, decrease=False
-                            )
-                        if temp["training_error"][-1] < 0.95:
-                            logging.info("RESET !")
-                            sess_main.run(tf.global_variables_initializer())
-                            temp = nn_main.training(
-                                sess_main, X_train, y_train, n_epoch=100000,
-                                display_step=100000, saving=False, stop_at_1=True,
-                                callback=True, decrease=False
-                            )
-                        if "%s" in main_weights_path:
-                            utils.saver(
-                                nn_main.params,
-                                sess_main,
-                                main_weights_path % iteration
-                                )
-                        else:
-                            utils.saver(nn_main.params, sess_main, main_weights_path)
-                        if main_weights_path != pos_weights_path:
-                            with tf.Session(graph_pos) as sess_pos:
-                                nn_pos.increase_complexity(sess_pos)
-                            with tf.Session(graph_neg) as sess_neg:
-                                nn_neg.increase_complexity(sess_neg)
-                if ((iteration>3) and ((callback["training_error"][-1] != 1) or 
-                        (callback["training_error"][-2] != 1))):
-                    if modif_pos:
-                        reduce_factor_pos /= 2.
-                    if modif_neg:
-                        reduce_factor_neg /= 2.
 
                 tbis = time.time()
                 timer["callback_treatment"].append(tbis - t)

@@ -19,10 +19,10 @@ try:
 except Exception as e:
     pass
 
-from .active_search import active_search
-from .utils_database import normalize_npy_database
-import tf_utils as utils
+from ..tf_utils import initialize_logger
 
+from adaptive_active_search import active_search
+from neural_aide.utils_database import normalize_npy_database
 
 
 def create_query(query, data):
@@ -60,14 +60,11 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
                              nb_biased_epoch=2000, use_main_weights=False,
                              display=False, save_plot=False, query=1,
                              biased_lr=0.001, tsm=False, pltlim=True,
-                             tsm_lim=None, reduce_factor=None,
-                             nb_background_points=None, pool_size=None,
+                             tsm_lim=None, reduce_factor=None, pool_size=None,
                              np_seed=None, tf_seed=None, saving_dir=None,
                              main_lr=0.001, nn_activation="relu",
                              nn_loss="binary_crossentropy",
-                             background_sampling="uncertain",
-                             doubleFilters=False, max_iter=501,
-                             log_into_file=True):
+                             background_sampling="uncertain"):
     """
     Run the active search.
     Params:
@@ -116,6 +113,8 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
         background_sampling (string). If "uncertain", background points will be
             the most uncertain of the model. If "random", background points
             will be randomly sampled.
+        reset_filters (bool): If True, the filters will be reset when they are
+            to close together.
     """
 
     if saving_dir is None:
@@ -130,12 +129,12 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
     identifier = "sdss_" + date
     for name, value in zip([
             "qdb", "random", "shapes", "include_background", "evolutive_small",
-            "nb_background_points", "nb_biased_epoch", "use_main_weights",
-            "query", "tsm", "biased_lr", "reduce_factor", "pool_size",
+            "nb_biased_epoch", "use_main_weights", "query", "tsm", "biased_lr",
+            "reduce_factor", "pool_size",
                             ], [
             qdb, random, shapes, include_background, evolutive_small,
-            nb_background_points, nb_biased_epoch, use_main_weights, query,
-            tsm, biased_lr, reduce_factor, pool_size
+            nb_biased_epoch, use_main_weights, query, tsm, biased_lr,
+            reduce_factor, pool_size
                                ]):
 
         identifier += "_" + name + "_" + str(value)
@@ -147,11 +146,8 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
     # Configurate logger
     logging.shutdown()
     reload(logging)
-    if log_into_file:
-        log_file = (pjoin(SAVING_DIRECTORY, "log.log"))
-    else:
-        log_file = None
-    utils.initialize_logger(log_file, filemode="w")
+    log_file = (pjoin(SAVING_DIRECTORY, "log.log"))
+    initialize_logger(log_file, filemode="w")
 
     # Fix the seeds
     if np_seed is None:
@@ -232,7 +228,7 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
 
     if use_main_weights:
         active_search(
-            X, y, shapes=shapes, max_iterations=max_iter,
+            X, y, shapes=shapes, max_iterations=501,
             pos_weights_path=main_weights_path,
             neg_weights_path=main_weights_path,
             main_weights_path=main_weights_path,
@@ -241,18 +237,15 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
             nb_max_main_epoch=4000, qdb=qdb, random=random, xlim=xlim,
             ylim=ylim, timer_save_path=timer_save_path, save_biased=False,
             include_background=include_background,
-            evolutive_small=evolutive_small,
-            nb_background_points=nb_background_points,
-            nb_biased_epoch=nb_biased_epoch,
-            biased_lr=biased_lr,
+            evolutive_small=evolutive_small, nb_biased_epoch=nb_biased_epoch,
+            biased_lr=biased_lr, tsm=tsm, tsm_lim=tsm_lim,
             reduce_factor=reduce_factor, pool_size=pool_size, main_lr=main_lr,
             nn_activation=nn_activation, nn_loss=nn_loss,
             background_sampling=background_sampling,
-            doubleFilters=doubleFilters
         )
     else:
         active_search(
-            X, y, shapes=shapes, max_iterations=max_iter,
+            X, y, shapes=shapes, max_iterations=501,
             pos_weights_path=pos_save_path,
             neg_weights_path=neg_save_path,
             main_weights_path=main_weights_path,
@@ -261,13 +254,11 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
             nb_max_main_epoch=4000, qdb=qdb, random=random, xlim=xlim,
             ylim=ylim, timer_save_path=timer_save_path, save_biased=True,
             include_background=include_background,
-            evolutive_small=evolutive_small,
-            nb_background_points=nb_background_points,
-            nb_biased_epoch=nb_biased_epoch,
-            biased_lr=biased_lr,
+            evolutive_small=evolutive_small, nb_biased_epoch=nb_biased_epoch,
+            biased_lr=biased_lr, tsm=tsm, tsm_lim=tsm_lim,
             reduce_factor=reduce_factor, pool_size=pool_size, main_lr=main_lr,
             nn_activation=nn_activation, nn_loss=nn_loss,
-            background_sampling=background_sampling
+            background_sampling=background_sampling,
         )
 
 
@@ -281,7 +272,8 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
                                 tf_seed=None, main_lr=0.001,
                                 nn_activation="relu",
                                 nn_loss="binary_crossentropy",
-                                background_sampling="uncertain", max_iter=11):
+                                background_sampling="uncertain",
+                                saving_dir=None):
     """
     Run the active search.
     Params:
@@ -327,7 +319,10 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
             will be randomly sampled.
     """
 
-    SAVING_DIRECTORY = pjoin(ressources_folder, "results")
+    if saving_dir is None:
+        SAVING_DIRECTORY = pjoin(ressources_folder, "results")
+    else:
+        SAVING_DIRECTORY = saving_dir
 
     # Create unique identifier
     date = str(datetime.datetime.now())
@@ -354,7 +349,7 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
     logging.shutdown()
     reload(logging)
     log_file = (pjoin(SAVING_DIRECTORY, "log.log"))
-    utils.initialize_logger(log_file, filemode="w")
+    initialize_logger(log_file, filemode="w")
 
     # Fix the seeds
     if np_seed is None:
@@ -420,8 +415,8 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
     neg_save_path = pjoin(SAVING_DIRECTORY, "weights_neg.pckl")
 
     if use_main_weights:
-        neural_aide.active_search.active_search(
-            X, y, shapes=shapes, max_iterations=max_iter,
+        active_search(
+            X, y, shapes=shapes, max_iterations=501,
             pos_weights_path=main_weights_path,
             neg_weights_path=main_weights_path,
             main_weights_path=main_weights_path,
@@ -437,8 +432,8 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
             background_sampling=background_sampling
         )
     else:
-        neural_aide.active_search.active_search(
-            X, y, shapes=shapes, max_iterations=max_iter,
+        active_search(
+            X, y, shapes=shapes, max_iterations=501,
             pos_weights_path=pos_save_path,
             neg_weights_path=neg_save_path,
             main_weights_path=main_weights_path,

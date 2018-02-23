@@ -252,6 +252,7 @@ def plot_advancement_qdb_search(X_train, y_train, X_val, y_val, old_pred,
 
     colors = ["red", "green"]
     colors_others = ["red", "yellow", "green"]
+    colors_old = ["darkred", "darkgreen"]
 
     # If xlim/ylim is not, find the region of interest:
     if xlim is None:
@@ -315,11 +316,11 @@ def plot_advancement_qdb_search(X_train, y_train, X_val, y_val, old_pred,
     plt.scatter(X_val[:, 0], X_val[:, 1],
                 c=[colors[int(j > 0.5)] for j in old_pred])
 
-    plt.scatter(X_train[:, 0], X_train[:, 1],
-                c=["grey" for j in range(X_train.shape[0]-1)] + ["black"])
-
     plt.scatter(X_val[uncertain_samples, 0], X_val[uncertain_samples, 1],
                 c=["orange" for j in range(len(uncertain_samples))])
+
+    plt.scatter(X_train[:, 0], X_train[:, 1],
+                c=[colors_old[j] for j in y_train.reshape(-1)[:-1]] + ["black"])
     plt.grid(True)
 
     # Plot the biased prediction
@@ -333,7 +334,7 @@ def plot_advancement_qdb_search(X_train, y_train, X_val, y_val, old_pred,
                    for k, j in zip(pred_pos, pred_neg)])
 
     plt.scatter(X_train[:, 0], X_train[:, 1],
-                c=["grey" for j in range(X_train.shape[0]-1)] + ["black"])
+                c=[colors_old[j] for j in y_train.reshape(-1)[:-1]] + ["black"])
     plt.grid(True)
 
     # Plot the new prediction
@@ -346,7 +347,7 @@ def plot_advancement_qdb_search(X_train, y_train, X_val, y_val, old_pred,
                 c=[colors[int(j > 0.5)] for j in new_pred])
 
     plt.scatter(X_train[:, 0], X_train[:, 1],
-                c=["grey" for j in range(X_train.shape[0]-1)] + ["black"])
+                c=[colors_old[j] for j in y_train.reshape(-1)[:-1]] + ["black"])
     plt.grid(True)
 
     # Plot the ground truth
@@ -359,7 +360,7 @@ def plot_advancement_qdb_search(X_train, y_train, X_val, y_val, old_pred,
                 c=[colors[int(k)] for k in y_val.reshape(-1)])
 
     plt.scatter(X_train[:, 0], X_train[:, 1],
-                c=["grey" for j in range(X_train.shape[0]-1)] + ["black"])
+                c=[colors_old[j] for j in y_train.reshape(-1)[:-1]] + ["black"])
     plt.grid(True)
 
     if save_path is not None:
