@@ -385,9 +385,7 @@ def qdb_sampling_dependant(nn_main, sess_main, X_train, y_train, X_val, y_val,
 
     # Look at the samples differently predicted by the biased network
     differences = ((pred_pos > 0.5) != (pred_neg > 0.5))
-    print(np.sum(differences))
     if np.sum(differences) < k:
-        logging.info("HERE")
         reduce_factor_pos /= 10
         reduce_factor_neg /= 10
         
@@ -396,12 +394,12 @@ def qdb_sampling_dependant(nn_main, sess_main, X_train, y_train, X_val, y_val,
         order = np.where(differences)[0]
         np.random.shuffle(order)
     else:
-        order = np.where(differences)[0]
-        temp = np.abs(
-            np.abs(pred_pos[order] - np.mean(pred_pos[order]))
-            + np.abs(pred_neg[order] - np.mean(pred_neg[order]))
-            ).reshape(-1)
-        order = order[np.argsort(temp)].reshape(-1)
+        order = np.random.choice(np.where(differences)[0], 10)
+        samples = X_val[order]
+        distances = []
+        for sample_id in range(10):
+            distances.append(np.sum(np.linalg.norm(samples - samples[sample_id], axis=0)))
+        order = order[np.argsort(distances)].reshape(-1)
 
     logging.info("Number of differences between positive " +
                  "and negative models: %s" % np.sum(differences))

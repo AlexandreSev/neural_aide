@@ -319,7 +319,7 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
 
                 # If the model did not converge, increase maximum training time
                 # next time
-                if (callback["training_error"][-1] != 1):
+                if (callback["training_error"][-1] < 0.95):
                     if (2 * nb_epoch_main) >= nb_max_main_epoch:
                         nb_epoch_main = nb_max_main_epoch
                     else:
@@ -329,11 +329,11 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                     if modif_pos and modif_neg:
                         nn_main.increase_complexity(sess_main)
                         temp = nn_main.training(
-                            sess_main, X_train, y_train, n_epoch=10000,
+                            sess_main, X_train, y_train, n_epoch=nb_epoch_main * 10,
                             display_step=100000, saving=False, stop_at_1=True,
                             callback=True, decrease=False
                             )
-                        if temp["training_error"][-1] != 1:
+                        if temp["training_error"][-1] < 0.95:
                             logging.info("RESET !")
                             sess_main.run(tf.global_variables_initializer())
                             temp = nn_main.training(

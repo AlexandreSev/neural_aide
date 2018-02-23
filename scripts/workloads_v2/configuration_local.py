@@ -1,7 +1,7 @@
 configuration = {
 	"RESSOURCES_FOLDER": "/Users/alex/Documents/LIX-PHD/experiments/neural_aide",
 	"QDB": True,
-	"RANDOM": True,
+	"RANDOM": False,
 	"SHAPES": [16, 16, 1],
 	"INCLUDE_BACKGROUND": True,
 	"EVOLUTIVE_SMALL": True,
