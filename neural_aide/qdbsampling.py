@@ -7,7 +7,7 @@ import time
 import tensorflow as tf
 
 from .sampling import find_k_most_uncertain
-from alex_library.tf_utils import utils
+import tf_utils as utils
 
 
 def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
