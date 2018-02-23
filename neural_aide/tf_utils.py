@@ -3,7 +3,7 @@ import tensorflow as tf
 import numpy as np
 import pickle
 import os
-import logging
+import logging as lg
 import argparse
 
 
@@ -221,10 +221,10 @@ def initialize_logger(log_file=None, filemode="a"):
     args = parser.parse_args()
 
     # Verify each argument
-    numeric_level = getattr(logging, args.log.upper(), 20)
+    numeric_level = getattr(lg, args.log.upper(), None)
     if not isinstance(numeric_level, int):
         raise ValueError('Invalid log level: %s' % args.log)
 
     # Configure logger
-    logging.basicConfig(level=numeric_level, filename=log_file, 
+    lg.basicConfig(level=numeric_level, filename=log_file, 
         filemode=filemode, format='%(asctime)s %(levelname)s: %(message)s')
