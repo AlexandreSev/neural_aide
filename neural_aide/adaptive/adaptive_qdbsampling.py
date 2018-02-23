@@ -8,7 +8,7 @@ import tensorflow as tf
 import pickle
 
 from ..sampling import find_k_most_uncertain
-from alex_library.tf_utils import utils
+import tf_utils as utils
 
 from ..active_nn import ActiveNeuralNetwork
 

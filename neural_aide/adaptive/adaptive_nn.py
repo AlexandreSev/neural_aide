@@ -4,7 +4,7 @@
 import logging
 import numpy as np
 import tensorflow as tf
-from alex_library.tf_utils import utils
+import tf_utils as utils
 from ..active_nn import ActiveNeuralNetwork as TrueActiveNN
 
 
