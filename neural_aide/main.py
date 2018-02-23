@@ -63,7 +63,8 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
                              np_seed=None, tf_seed=None, saving_dir=None,
                              main_lr=0.001, nn_activation="relu",
                              nn_loss="binary_crossentropy",
-                             background_sampling="uncertain", max_iter=11):
+                             background_sampling="uncertain", max_iter=11,
+                             log_into_file=True):
     """
     Run the active search.
     Params:
@@ -143,7 +144,10 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
     # Configurate logger
     logging.shutdown()
     reload(logging)
-    log_file = (pjoin(SAVING_DIRECTORY, "log.log"))
+    if log_into_file:
+        log_file = (pjoin(SAVING_DIRECTORY, "log.log"))
+    else:
+        log_file = None
     utils.initialize_logger(log_file, filemode="w")
 
     # Fix the seeds
