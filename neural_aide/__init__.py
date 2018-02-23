@@ -5,5 +5,5 @@ import threesetsmetric
 import sampling
 import qdbsampling
 import callbacktreatment
-import adaptative
+import adaptive
 import tf_utils

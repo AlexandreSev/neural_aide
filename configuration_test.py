@@ -2,7 +2,7 @@ configuration = {
 	"RESSOURCES_FOLDER": ".",
 	"QDB": True,
 	"RANDOM": True,
-	"SHAPES": [16, 1],
+	"SHAPES": [4, 1],
 	"INCLUDE_BACKGROUND": True,
 	"EVOLUTIVE_SMALL": False,
 	"NB_BIASED_EPOCH": 2000,
