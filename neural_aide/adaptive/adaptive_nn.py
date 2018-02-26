@@ -101,7 +101,7 @@ class ActiveNeuralNetwork():
                  saving=True, save_path="./model.ckpt", warmstart=False,
                  weights_path="./model.kpt", display_step=50, stop_at_1=False,
                  nb_min_epoch=50, reduce_factor=1, increase_if_not_1=False,
-                 decrease=True):
+                 decrease=True, loss_criteria=False):
         """
         Train the model on given data.
 
@@ -151,7 +151,7 @@ class ActiveNeuralNetwork():
                                     X_val, y_val, n_epoch, callback, saving,
                                     save_path, warmstart, weights_path,
                                     display_step, stop_at_1, nb_min_epoch,
-                                    reduce_factor)
+                                    reduce_factor, loss_criteria=loss_criteria)
 
         if increase_if_not_1 and (callback["training_error"][-1] != 1):
             self.increase_complexity(sess)

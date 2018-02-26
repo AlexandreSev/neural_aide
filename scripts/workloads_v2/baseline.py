@@ -35,7 +35,8 @@ try:
         tf_seed=7,
         saving_dir=pjoin(configuration["RESSOURCES_FOLDER"],
                          "results", "baseline"),
-        doubleFilters=True
+        doubleFilters=True,
+        loss_criteria=True
         )
 except Exception as e:
     logging.exception("Here is the error")

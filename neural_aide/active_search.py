@@ -32,7 +32,8 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                   reduce_factor=2., pool_size=None,
                   main_lr=0.001, nn_activation="relu",
                   nn_loss="binary_crossentropy",
-                  background_sampling="uncertain", doubleFilters=False):
+                  background_sampling="uncertain", doubleFilters=False,
+                  loss_criteria=False):
     """
     Run the Query by disagreement search with neural networks.
     Params:
@@ -231,7 +232,8 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                                              nb_biased_epoch=nb_biased_epoch,
                                              reduce_factor_pos=reduce_factor_pos,
                                              reduce_factor_neg=reduce_factor_neg,
-                                             pool_size=pool_size)
+                                             pool_size=pool_size,
+                                             loss_criteria=loss_criteria)
                                 )
                         else:
                             (sample, pred_pos, pred_neg, biased_samples, times,
@@ -245,7 +247,8 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                                              reduce_factor_pos=reduce_factor_pos,
                                              reduce_factor_neg=reduce_factor_neg,
                                              pool_size=pool_size,
-                                             doubleFilters=doubleFilters)
+                                             doubleFilters=doubleFilters,
+                                             loss_criteria=loss_criteria)
                                 )
                         modif_pos = (reduce_factor_pos_new != reduce_factor_pos)
                         modif_neg = (reduce_factor_neg_new != reduce_factor_neg)
@@ -293,8 +296,9 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                 logging.info("Training main model")
                 temp = nn_main.training(
                     sess_main, X_train, y_train, n_epoch=nb_epoch_main,
-                    display_step=100000, saving=False, stop_at_1=True,
-                    callback=True,
+                    display_step=100000, saving=False,
+                    stop_at_1=not loss_criteria,
+                    callback=True, loss_criteria=loss_criteria
                     )
 
                 tbis = time.time()
@@ -330,16 +334,18 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                         nn_main.increase_complexity(sess_main)
                         temp = nn_main.training(
                             sess_main, X_train, y_train, n_epoch=nb_epoch_main * 10,
-                            display_step=100000, saving=False, stop_at_1=True,
-                            callback=True, decrease=False
+                            display_step=100000, saving=False,
+                            stop_at_1=not loss_criteria, callback=True,
+                            decrease=False, loss_criteria=loss_criteria,
                             )
                         if temp["training_error"][-1] < 0.95:
                             logging.info("RESET !")
                             sess_main.run(tf.global_variables_initializer())
                             temp = nn_main.training(
                                 sess_main, X_train, y_train, n_epoch=100000,
-                                display_step=100000, saving=False, stop_at_1=True,
-                                callback=True, decrease=False
+                                display_step=100000, saving=False,
+                                stop_at_1=not loss_criteria,callback=True,
+                                decrease=False, loss_criteria=loss_criteria,
                             )
                         if "%s" in main_weights_path:
                             utils.saver(

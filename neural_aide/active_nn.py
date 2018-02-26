@@ -323,9 +323,9 @@ class ActiveNeuralNetwork:
                 if dico_callback["training_error"][-1] == 1:
                     break
 
-            if loss_criteria and len(dico_callback["loss"])>20:
+            if loss_criteria and (len(dico_callback["loss"])>20) and (dico_callback["training_error"][-1] == 1):
                 l = np.array(dico_callback["loss"][-20:])
-                if (np.mean( ((l - np.roll(l, 1))[1:] > 0) - 0.5))>0:
+                if (np.min(l) >= np.min(np.array(dico_callback["loss"][:-20]))):
                     break
 
 

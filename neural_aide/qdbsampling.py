@@ -15,7 +15,8 @@ import tf_utils as utils
 def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
                        biased_samples, positive=True, load_weights=True,
                        save=True, first_nb_epoch=10000, min_biased_epoch=10,
-                       reduce_factor=None, doubleFilters=False):
+                       reduce_factor=None, doubleFilters=False,
+                       loss_criteria=False):
     """
     Train a positive neural network
     Params:
@@ -93,10 +94,10 @@ def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
         nn.training(sess, X_train,
                     y_train, X_small=X_val[biased_samples],
                     y_small=y_small, n_epoch=nb_epoch,
-                    display_step=100000, stop_at_1=True,
+                    display_step=100000, stop_at_1=not loss_criteria,
                     saving=False, callback=True,
                     nb_min_epoch=min_biased_epoch,
-                    reduce_factor=_reduce_factor)
+                    reduce_factor=_reduce_factor, loss_criteria=loss_criteria)
 
         # Predict the whole database
         pred = sess.run(nn.prediction,
@@ -144,7 +145,8 @@ def qdb_sampling(nn_main, sess_main, X_train, y_train, X_val, y_val, iteration,
                  neg_weights_path, random=False, save=True,
                  evolutive_small=False, nb_background_points=None,
                  nb_biased_epoch=10000, reduce_factor_pos=2, pool_size=None,
-                 reduce_factor_neg=2, background_sampling="uncertain"):
+                 reduce_factor_neg=2, background_sampling="uncertain",
+                 loss_criteria=False):
     """
     Find the next sample with query by disagreement.
     Params:
@@ -213,7 +215,7 @@ def qdb_sampling(nn_main, sess_main, X_train, y_train, X_val, y_val, iteration,
     pred_pos, reduce_factor_pos = training_biased_nn(
         X_train, y_train, X_val, y_val, nn_pos, graph_pos, pos_weights_path,
         biased_samples, True, (iteration != 3), save, nb_biased_epoch,
-        reduce_factor=reduce_factor_pos,
+        reduce_factor=reduce_factor_pos, loss_criteria=loss_criteria
         )
     t2 = time.time()
 
@@ -222,7 +224,7 @@ def qdb_sampling(nn_main, sess_main, X_train, y_train, X_val, y_val, iteration,
     pred_neg, reduce_factor_neg = training_biased_nn(
         X_train, y_train, X_val, y_val, nn_neg, graph_neg, neg_weights_path,
         biased_samples, False, (iteration != 3), save, nb_biased_epoch,
-        reduce_factor=reduce_factor_neg,
+        reduce_factor=reduce_factor_neg, loss_criteria=loss_criteria
         )
     t3 = time.time()
 
@@ -237,12 +239,12 @@ def qdb_sampling(nn_main, sess_main, X_train, y_train, X_val, y_val, iteration,
         order = np.where(differences)[0]
         np.random.shuffle(order)
     else:
-        order = np.where(differences)[0]
-        temp = np.abs(
-            np.abs(pred_pos[order] - np.mean(pred_pos[order]))
-            + np.abs(pred_neg[order] - np.mean(pred_neg[order]))
-            ).reshape(-1)
-        order = order[np.argsort(temp)].reshape(-1)
+        order = np.random.choice(np.where(differences)[0], 10)
+        samples = X_val[order]
+        distances = []
+        for sample_id in range(10):
+            distances.append(np.sum(np.linalg.norm(samples - samples[sample_id], axis=0)))
+        order = order[np.argsort(distances)].reshape(-1)
 
     logging.info("Number of differences between positive " +
                  "and negative models: %s" % np.sum(differences))
@@ -268,7 +270,7 @@ def qdb_sampling_dependant(nn_main, sess_main, X_train, y_train, X_val, y_val,
                            reduce_factor_pos=2, pool_size=None,
                            reduce_factor_neg=2,
                            background_sampling="uncertain",
-                           doubleFilters=False):
+                           doubleFilters=False, loss_criteria=False):
     """
     Find the next sample with query by disagreement.
     Params:
@@ -355,6 +357,7 @@ def qdb_sampling_dependant(nn_main, sess_main, X_train, y_train, X_val, y_val,
         X_train, y_train, X_val, y_val, nn_pos, graph_pos, main_weights_path,
         biased_samples, True, (iteration != 3), False, nb_biased_epoch,
         reduce_factor=reduce_factor_pos, doubleFilters=doubleFilters,
+        loss_criteria=loss_criteria,
         )
     t2 = time.time()
 
@@ -380,6 +383,7 @@ def qdb_sampling_dependant(nn_main, sess_main, X_train, y_train, X_val, y_val,
         X_train, y_train, X_val, y_val, nn_neg, graph_neg, main_weights_path,
         biased_samples, False, (iteration != 3), False, nb_biased_epoch,
         reduce_factor=reduce_factor_neg, doubleFilters=doubleFilters,
+        loss_criteria=loss_criteria,
         )
     t3 = time.time()
 
@@ -394,11 +398,13 @@ def qdb_sampling_dependant(nn_main, sess_main, X_train, y_train, X_val, y_val,
         order = np.where(differences)[0]
         np.random.shuffle(order)
     else:
-        order = np.random.choice(np.where(differences)[0], 10)
+        order = np.random.choice(np.where(differences)[0], 100)
         samples = X_val[order]
         distances = []
-        for sample_id in range(10):
-            distances.append(np.sum(np.linalg.norm(samples - samples[sample_id], axis=0)))
+        for sample_id in range(100):
+            distances.append(np.percentile(np.linalg.norm(samples - samples[sample_id],
+                                                          axis=0),
+                                           10))
         order = order[np.argsort(distances)].reshape(-1)
 
     logging.info("Number of differences between positive " +
