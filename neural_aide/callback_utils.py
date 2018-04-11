@@ -30,6 +30,9 @@ def treat_timer(timer):
 
 
 def plot_sampling(timer, title=None):
+    """
+    Plot the timer for the sampling step
+    """
     for key in ["iterations", "sampling", "background_points", "pos_nn",
                 "neg_nn", "disagreement_point"]:
         if key in timer:
@@ -41,6 +44,10 @@ def plot_sampling(timer, title=None):
 
 
 def plot_true_iterations(timer, title=None, show=True):
+    """
+    Plot the timer of the true computational time
+        (without callbacks save, plots, and predictions).
+    """
     to_plot = timer["iterations"]
     for key in ["timer_save", "predictions", "callback_treatment", "plots",
                 "saving_weights", "callback_save"]:
@@ -55,6 +62,9 @@ def plot_true_iterations(timer, title=None, show=True):
 
 
 def plot_true_breakdown(timer, title=None):
+    """
+    Plot the breakdown between nn training and sampling 
+    """
     plot_true_iterations(timer, show=False)
     for key in ["main_nn", "sampling"]:
         plt.plot(timer[key], label=key)

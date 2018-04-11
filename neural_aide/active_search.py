@@ -34,7 +34,8 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                   nn_loss="binary_crossentropy",
                   background_sampling="uncertain", doubleFilters=False):
     """
-    Run the Query by disagreement search with neural networks.
+    Run the active search with neural networks.
+
     Params:
         X (np.array): Data on which the data exploration will be done.
         y (np.array): Searched labels.
@@ -50,8 +51,10 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
             will be plotted.
         callback_save_path (string): Where to save the callbacks. If None,
             the callbacks will not be saved.
+        nb_max_main_epoch (int): maximum number of epochs for the main neural
+            network during one step
         qdb (boolean): If True, use query by disagreement to choose the new
-            sample. Else, it uses uncertainty sampling.
+            sample. Else, use uncertainty sampling.
         random (boolean): If True, take a random sample in the disagreement
             region. Else, take the most uncertain. Not applyable if not qdb.
         xlim (2-uple of integers): limits of the x axis.
@@ -64,11 +67,13 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
             nns will include bacground_points.
         evolutive_small (boolean): Choose if the number of background points
             will change over time or not.
+        nb_background_points (int): If evolutive_small, the number of
+            background points will be set to nb_background_points times the
+            number of labeled points. Else, it will sample nb_background_points
+            at each step. The default value (when set to None) is 2 with
+            evolutive_small and 200 without evolutive_small. 
         nb_biased_epoch (integer): Number of epoch to do at the first step.
         biased_lr (real): Learning rate of biased neural networks.
-        tsm (boolean): Use or not three set
-        tsm_lim (integerr): Maximum number of tuples examined during one
-            iteration of tsm.update_regions
         reduce_factor (real or string): The gradients of the biased sample will
             be divided by this factor. If None, it will be equal to
             len(biased_sample). If "evolutive", it will be equal to
@@ -78,9 +83,12 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
         main_lr (real): Learning rate of the main model.
         nn_activation (string): activation functions of the neural networks
         nn_loss (string): loss of the neural networks
-        background_sampling (string). If "uncertain", background points will be
+        background_sampling (string): If "uncertain", background points will be
             the most uncertain of the model. If "random", background points
             will be randomly sampled.
+        doubleFilters (boolean): In the case of the biased neural network load
+            the weights of the main nn at each step, these biased nns will have
+            two times more parameters if doubleFilter is set to True.
     """
 
     # Initialize variables
@@ -353,6 +361,7 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
                             with tf.Session(graph_pos) as sess_pos:
                                 nn_pos.increase_complexity(sess_pos)
                             with tf.Session(graph_neg) as sess_neg:
+                                
                                 nn_neg.increase_complexity(sess_neg)
                 if ((iteration>3) and ((callback["training_error"][-1] != 1) or 
                         (callback["training_error"][-2] != 1))):

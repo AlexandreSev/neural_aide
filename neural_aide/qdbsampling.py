@@ -38,6 +38,9 @@ def training_biased_nn(X_train, y_train, X_val, y_val, nn, graph, weights_path,
             be divided by this factor. If None, it will be equal to
             len(biased_sample). If "evolutive", it will be equal to
             len(biased_samples) * 2. / X_train.shape[0].
+        doubleFilters (boolean): In the case of the biased neural network load
+            the weights of the main nn at each step, these biased nns will have
+            two times more parameters if doubleFilter is set to True.
     """
     with tf.Session(graph=graph) as sess:
 
@@ -146,7 +149,9 @@ def qdb_sampling(nn_main, sess_main, X_train, y_train, X_val, y_val, iteration,
                  nb_biased_epoch=10000, reduce_factor_pos=2, pool_size=None,
                  reduce_factor_neg=2, background_sampling="uncertain"):
     """
-    Find the next sample with query by disagreement.
+    Find the next sample with query by disagreement, when the biased nns do not
+    load the weights of the main neural network at each step.
+
     Params:
         nn_main (ActiveNeuralNetwork): Main nn of the active search.
         sess_main (tf.Session): sessions associated with the nn.
@@ -166,13 +171,18 @@ def qdb_sampling(nn_main, sess_main, X_train, y_train, X_val, y_val, iteration,
         save (boolean): If True, will save weights of postive and negative nns.
         evolutive_small (boolean): Choose if the number of background points
             will change over time or not.
+        nb_background_points (int): If evolutive_small, the number of
+            background points will be set to nb_background_points times the
+            number of labeled points. Else, it will sample nb_background_points
+            at each step. The default value (when set to None) is 2 with
+            evolutive_small and 200 without evolutive_small. 
         nb_biased_epoch (integer): Number of epoch to do at the first step
-        reduce_factor (real or string): The gradients of the biased sample will
-            be divided by this factor. If None, it will be equal to
-            len(biased_sample). If "evolutive", it will be equal to
-            len(biased_samples) * 2. / X_train.shape[0].
+        reduce_factor_pos (real): The gradients of the positively biased nn for
+            the biased sample will be divided by this factor.
         pool_size (integer): Size of the pool considered to find the most
             uncertain point. If None, the whole X is used.
+        reduce_factor_neg (real): The gradients of the negatively biased nn for
+            the biased sample will be divided by this factor.
         background_sampling (string). If "uncertain", background points will be
             the most uncertain of the model. If "random", background points
             will be randomly sampled.
@@ -182,6 +192,8 @@ def qdb_sampling(nn_main, sess_main, X_train, y_train, X_val, y_val, iteration,
         (np.array) labels predicted by the postive model
         (np.array) labels predicted by the negative model
         (4-uple of float) time taken for each step
+        (integer) reduce factor for the positive model
+        (integer) reduce factor for the negative model
     """
 
     # Find background points
@@ -263,14 +275,16 @@ def qdb_sampling(nn_main, sess_main, X_train, y_train, X_val, y_val, iteration,
 
 def qdb_sampling_dependant(nn_main, sess_main, X_train, y_train, X_val, y_val,
                            iteration, main_weights_path, random=False,
-                           save=True, evolutive_small=False,
+                           save=False, evolutive_small=False,
                            nb_background_points=None, nb_biased_epoch=10000,
                            reduce_factor_pos=2, pool_size=None,
                            reduce_factor_neg=2,
                            background_sampling="uncertain",
                            doubleFilters=False):
     """
-    Find the next sample with query by disagreement.
+    Find the next sample with query by disagreement when the biased nns load
+    the weights of the main neural network at each step.
+
     Params:
         nn_main (ActiveNeuralNetwork): Main nn of the active search.
         sess_main (tf.Session): sessions associated with the nn.
@@ -279,27 +293,30 @@ def qdb_sampling_dependant(nn_main, sess_main, X_train, y_train, X_val, y_val,
         X_val (np.array): Unlabeled samples.
         y_val (np.array): Labels of X_val.
         iteration (integer): number of the current iteration.
-        nn_pos (ActiveNeuralNetwork): positively biased nn.
-        graph_pos (tf.graph): graph associated to the nn_pos.
-        pos_weight_path (string): where to save positive weights.
-        nn_neg (ActiveNeuralNetwork): negatively biased nn.
-        graph_neg (tf.graph): graph associated to the nn_neg.
-        neg_weight_path (string): where to save negative weights.
+        main_weight_path (string): where are saved the main weights.
         random (boolean): If True, take a random sample in the disagreement
             region. Else, take the most uncertain.
         save (boolean): If True, will save weights of postive and negative nns.
         evolutive_small (boolean): Choose if the number of background points
             will change over time or not.
+        nb_background_points (int): If evolutive_small, the number of
+            background points will be set to nb_background_points times the
+            number of labeled points. Else, it will sample nb_background_points
+            at each step. The default value (when set to None) is 2 with
+            evolutive_small and 200 without evolutive_small. 
         nb_biased_epoch (integer): Number of epoch to do at the first step
-        reduce_factor (real or string): The gradients of the biased sample will
-            be divided by this factor. If None, it will be equal to
-            len(biased_sample). If "evolutive", it will be equal to
-            len(biased_samples) * 2. / X_train.shape[0].
+        reduce_factor_pos (real): The gradients of the positively biased nn for
+            the biased sample will be divided by this factor.
         pool_size (integer): Size of the pool considered to find the most
             uncertain point. If None, the whole X is used.
+        reduce_factor_neg (real): The gradients of the negatively biased nn for
+            the biased sample will be divided by this factor.
         background_sampling (string). If "uncertain", background points will be
             the most uncertain of the model. If "random", background points
             will be randomly sampled.
+        doubleFilters (boolean): In the case of the biased neural network load
+            the weights of the main nn at each step, these biased nns will have
+            two times more parameters if doubleFilter is set to True.
 
     Return:
         (integer) indice of the new sample

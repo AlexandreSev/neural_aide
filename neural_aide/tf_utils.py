@@ -86,12 +86,13 @@ def loaderFromDict(params, sess, dico_saver):
 
 def loader(params, sess, save_path):
     """
-    Custom loader for tensorflow model. Careful, the model must be created, it will only assign values
-    to existing variable.
+    Custom loader for tensorflow model. Careful, the model must be created, it
+    will only assign values to existing variable.
 
     Args:
-        params (dict):  dictionnaire containing "weights" and "biases", in which are stocked the tensorflow 
-                variables corresponding to the weights and the biases of the model.
+        params (dict):  dictionnaire containing "weights" and "biases", in
+            which are stocked the tensorflow variables corresponding to the
+            weights and the biases of the model.
         sess (tf.Session): Current tensorflow Session
         save_path (str): The path where the model is saved
     """
@@ -102,14 +103,16 @@ def loader(params, sess, save_path):
 
 def loader_from_another_network(params, sess, params_saver):
     """
-    Custom loader for tensorflow model. Careful, the model must be created, it will only assign values
-    to existing variable.
+    Custom loader for tensorflow model. Careful, the model must be created,
+    it will only assign values to existing variable.
 
     Args:
-        params (dict):  dictionnaire containing "weights" and "biases", in which are stocked the tensorflow 
-                variables corresponding to the weights and the biases of the model.
+        params (dict):  dictionary containing "weights" and "biases", in which
+            are stocked the tensorflow variables corresponding to the weights
+            and the biases of the model.
         sess (tf.Session): Current tensorflow Session
-        save_path (str): The path where the model is saved
+        params_saver (str): The same dictionary as params, but for the
+            reference nn.
     """
     weights = params["weights"]
     biases = params["biases"]
@@ -126,7 +129,7 @@ def loader_from_another_network(params, sess, params_saver):
         else:
             print("WARNING: key %s in params but not in saved biases.")
 
-def compute_accuracy(nn, X, y, sess, dropout=False, ae_ffnn=False, multiclass=False):
+def compute_accuracy(nn, X, y, sess, dropout=False, multiclass=False):
     """
     Compute the accuracy for a binary classification
 
@@ -136,6 +139,8 @@ def compute_accuracy(nn, X, y, sess, dropout=False, ae_ffnn=False, multiclass=Fa
         y (np.array): labels of the data
         sess (tf.Session): current running Session
         dropout (float): keeping probability for the input. Set to None if there is no dropout.
+        multiclass (boolean): if true, the output of the nn must be a softmax. Else,
+            it must be a sigmoid.
 
     Returns:
         float: The computed accuracy
@@ -144,9 +149,7 @@ def compute_accuracy(nn, X, y, sess, dropout=False, ae_ffnn=False, multiclass=Fa
     if dropout:
         for key in nn.dropout:
             feed_dict[key] = 1.
-    if ae_ffnn:
-        return np.mean((sess.run(nn.out_tensor_nn, feed_dict=feed_dict)>0.5) == y)
-    elif multiclass:
+    if multiclass:
         return np.mean(np.argmax(sess.run(nn.out_tensor, feed_dict=feed_dict), axis=-1) == np.argmax(y, axis=-1))
     else:
         return np.mean((sess.run(nn.out_tensor, feed_dict=feed_dict)>0.5) == y)
@@ -159,6 +162,7 @@ def compute_reconstruction_error(ae, X, sess, y=None, dropout=False):
         ae (model): auto_encoder which have loss, input_tensor and can have dropout attribute.
         X (np.array): data on wich the error is calculted
         sess (tf.Session): current running Session
+        y (np.array): labels of X
         dropout (Boolean): Is the autoencoder denoising ?
 
     Returns:
@@ -175,6 +179,9 @@ def compute_reconstruction_error(ae, X, sess, y=None, dropout=False):
     return sess.run(ae.loss, feed_dict=feed_dict)
 
 def logging(nb_buckets, hidden_sizes, denoising_rate):
+    """
+    Print on console some information
+    """
     print("_"*30)
     print("")
     print('{:^30}'.format("  KFOLD %s"%nb_buckets))
@@ -212,6 +219,7 @@ def initialize_logger(log_file=None, filemode="a"):
     Params:
         log_file (string): Where to save the log.
             If None, logs will be printed on console.
+        filemode (string): see logging documentation.
     """
     # Create parser
     parser = argparse.ArgumentParser()

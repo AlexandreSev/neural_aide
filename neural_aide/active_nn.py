@@ -9,7 +9,7 @@ import tf_utils as utils
 
 def reduce_weights(x, k):
     """
-    Divide x by 200 if x is not None
+    Divide x by k if x is not None
     """
     if x is not None:
         return x/k
@@ -19,7 +19,7 @@ def reduce_weights(x, k):
 
 def compute_score(nn, X, y, sess, f1score=True):
     """
-    Compute a score of a neural network.
+    Compute a score (accuracy of f1score) of a neural network.
     Params:
         nn (ActiveNeuralNetwork): the nn to evaluate.
         X (np.array): the data on which the nn will be evaluated.
@@ -59,14 +59,18 @@ class ActiveNeuralNetwork:
         """
         Args:
             input_shape (int or tuple of int): Shape of the input of the
-                neural network.
+                neural network. #TODO: verify the tuple of int, i.e
+                convolutional NNs
             hidden_shapes ([tuple of int or int]): list of the shape of the
                 layer. If an int is given, it is a fully connected layer. If a
                 tuple of the shape (a, b, c) is given, it is a convolutional
                 layer with c filters of size a*a with a stride b.
             loss (string): Either "l2", "binary_crossentropy" or
                 "multiclass_crossentropy".
-            batch_size (integer): Size of one batch during training
+            batch_size (integer): Size of one batch during training.
+            first_fully_connected_input_shape (integer): Size of the first
+                fully connected layer in a CNN. Used if input_shape is a tuple
+                of ints.
             include_small (boolean): If True, include X_small when computing
                 the training score.
             learning_rate (real): learning rate used during the training.
@@ -99,6 +103,9 @@ class ActiveNeuralNetwork:
         self.build()
 
     def setLR(self, lr):
+        """
+        Change the learning rate of the optimizer.
+        """
         logging.info("LR set to %s" % lr)
         self.optimizer = tf.train.AdamOptimizer(learning_rate=lr)
 
@@ -122,9 +129,9 @@ class ActiveNeuralNetwork:
             logging.debug("i = %s" % i)
             logging.debug("sizes[i] = " + str(self.sizes[i]))
 
-            if type(self.sizes[i]) == int:
+            if type(self.sizes[i]) == int: # Fully connected layer
 
-                if type(self.sizes[i-1]) == int:
+                if type(self.sizes[i-1]) == int: # following a fully connected
 
                     self.params["biases"]["b%s" % (i-1)] = (
                         utils.create_bias_variable(shape=[self.sizes[i]])
@@ -134,7 +141,8 @@ class ActiveNeuralNetwork:
                         utils.create_weight_variable(shape=(self.sizes[i-1],
                                                             self.sizes[i]))
                     )
-                else:
+
+                else: # following a convolutional layer
 
                     self.params["biases"]["b%s" % (i-1)] = (
                         utils.create_bias_variable(shape=[self.sizes[i]])
@@ -144,7 +152,7 @@ class ActiveNeuralNetwork:
                         utils.create_weight_variable(shape=(self.unknown_shape,
                                                             self.sizes[i]))
                     )
-            else:
+            else: # Convolutional layer
 
                 self.params["biases"]["b%s" % (i-1)] = (
                     utils.create_bias_variable(shape=[self.sizes[i][2]])
@@ -156,6 +164,7 @@ class ActiveNeuralNetwork:
                                                         self.sizes[i-1][2],
                                                         self.sizes[i][2]))
                 )
+
         logging.debug("END OF create_weights")
 
     def create_placeholder(self):
@@ -183,11 +192,11 @@ class ActiveNeuralNetwork:
         self.hidden_representations = [self.input_tensor]
         current_input = self.input_tensor
 
+        # Create the layers except the last one
         for i in range(len(self.sizes)-2):
 
             if type(self.sizes[i+1]) == int:
-                # current_input = tf.contrib.layers.flatten(current_input)
-
+                
                 current_input = self.activation(
                     tf.matmul(
                         current_input,
@@ -211,8 +220,7 @@ class ActiveNeuralNetwork:
                                                (1, 2, 2, 1), "VALID")
                 self.hidden_representations.append(current_input)
 
-        # current_input = tf.contrib.layers.flatten(current_input)
-
+        # Create the last layer
         if self.loss_name == "l2":
             self.prediction = tf.sigmoid(tf.matmul(
                 current_input,
@@ -243,6 +251,7 @@ class ActiveNeuralNetwork:
                     logits=self.out_tensor
                     )
 
+        # Create training operations
         self.training_step = self.optimizer.minimize(self.loss)
 
         compute_gradients = self.optimizer.compute_gradients(self.loss)
@@ -288,6 +297,7 @@ class ActiveNeuralNetwork:
                 training
             reduce_factor (real): The gradients of X_small will be divided
                 by this factor.
+            loss_criteria (bool): if True, will look a the loss to stop training
 
         Return:
             dictionnary: If callback==True, return the callback.
@@ -460,6 +470,7 @@ class ActiveNeuralNetwork:
             y_val (np.array): Labels of X_val.
             best_val_error (float): Minimum error encountered yet.
             best_n_epoch (int): On which epoch best_val_error has been found.
+            loss (int); current value of the loss function.
         """
         logging.info("Epoch %s" % nb_epoch)
         if self.include_small and (X_small is not None):

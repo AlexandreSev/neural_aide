@@ -86,8 +86,10 @@ def plot_advancement_uncertainty_search(X_train, y_train, X_val, y_val,
     """
     Plot 3 figures to vizualize the progress of the uncertainty search.
     Params:
-        X (np.array): Data to visualize.
-        y (np.array): True labels
+        X_train (np.array): Labeled data.
+        y_train (np.array): Labels of X_train.
+        X_val (np.array): Unlabeled data.
+        y_val (np.array): Labels of X_val.
         old_pred (np.array): Labels given at the last iteration.
         new_pred (np.array): Labels given at the current iteration.
         save_path (string): where to save the plot. If None, the plot is not
@@ -186,8 +188,10 @@ def random_uncertainty_plot(X_train, y_train, X_val, y_val, old_pred, new_pred,
     Plot 4 figures with random pointsto vizualize the progress of the qdb
     search.
     Params:
-        X (np.array): Data to visualize.
-        y (np.array): True labels.
+        X_train (np.array): Labeled data.
+        y_train (np.array): Labels of X_train.
+        X_val (np.array): Unlabeled data.
+        y_val (np.array): Labels of X_val.
         old_pred (np.array): Labels given at the last iteration.
         new_pred (np.array): Labels given at the current iteration.
         n_points (integer): number of points to plot.
@@ -234,13 +238,14 @@ def plot_advancement_qdb_search(X_train, y_train, X_val, y_val, old_pred,
     """
     Plot 4 figures to vizualize the progress of the qdb search.
     Params:
-        X (np.array): Data to visualize.
-        y (np.array): True labels
+        X_train (np.array): Labeled data.
+        y_train (np.array): Labels of X_train.
+        X_val (np.array): Unlabeled data.
+        y_val (np.array): Labels of X_val.
         old_pred (np.array): Labels given at the last iteration.
         new_pred (np.array): Labels given at the current iteration.
         pred_pos (np.array): Labels given by the positevely biased model.
         pred_neg (np.array): Labels given by the negatively biased model.
-        samples (list of integers): Indices of labeled samples.
         uncertain_samples (list of integers): Indices of samples used to train
             biased nn.
         save_path (string): where to save the plot. If None, the plot is not
@@ -380,13 +385,14 @@ def random_advancement_plot(X_train, y_train, X_val, y_val, old_pred, new_pred,
     Plot 4 figures with random pointsto vizualize the progress of the qdb
     search.
     Params:
-        X (np.array): Data to visualize.
-        y (np.array): True labels.
+        X_train (np.array): Labeled data.
+        y_train (np.array): Labels of X_train.
+        X_val (np.array): Unlabeled data.
+        y_val (np.array): Labels of X_val.
         old_pred (np.array): Labels given at the last iteration.
         new_pred (np.array): Labels given at the current iteration.
         pred_pos (np.array): Labels given by the positevely biased model.
         pred_neg (np.array): Labels given by the negatively biased model.
-        samples (list of integers): Indices of labeled samples.
         uncertain_samples (list of integers): Indices of samples used to train
             biased nn.
         n_points (integer): number of points to plot.

@@ -113,8 +113,6 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
         background_sampling (string). If "uncertain", background points will be
             the most uncertain of the model. If "random", background points
             will be randomly sampled.
-        reset_filters (bool): If True, the filters will be reset when they are
-            to close together.
     """
 
     if saving_dir is None:
@@ -262,6 +260,7 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
         )
 
 
+#TODO: check this
 def run_experiment_with_housing(ressources_folder, qdb=True,
                                 random=True, shapes=[32, 32, 1],
                                 include_background=True, evolutive_small=True,
@@ -317,6 +316,8 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
         background_sampling (string). If "uncertain", background points will be
             the most uncertain of the model. If "random", background points
             will be randomly sampled.
+        saving_dir (string): where to save the results. If None, it will
+            be in ressources_folder/results.
     """
 
     if saving_dir is None:

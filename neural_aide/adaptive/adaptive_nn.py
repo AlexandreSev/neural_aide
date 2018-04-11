@@ -11,7 +11,7 @@ from ..active_nn import ActiveNeuralNetwork as TrueActiveNN
 
 def reduce_weights(x, k):
     """
-    Divide x by 200 if x is not None
+    Divide x by k if x is not None
     """
     if x is not None:
         return x/k
@@ -26,6 +26,7 @@ def compute_score(nn, X, y, sess, f1score=True):
         nn (ActiveNeuralNetwork): the nn to evaluate.
         X (np.array): the data on which the nn will be evaluated.
         y (np.array): Labels of X.
+        sess (tf.Session): current running session
         f1score (boolean): If True, calculate f1score. Else, calculate
             accuracy.
     """
@@ -51,27 +52,31 @@ def compute_score(nn, X, y, sess, f1score=True):
 
 class ActiveNeuralNetwork():
     """
-    Create a feed forward network
+    Create a feed forward network with varying size
     """
 
     def __init__(self, input_shape=2, hidden_shapes=[2, 1],
-                 loss="binary_crossentropy", batch_size=64,
+                 loss="binary_crossentropy", batch_size=50000,
                  first_fully_connected_input_shape=3136, include_small=False,
                  learning_rate=0.001, activation="relu"):
         """
         Args:
             input_shape (int or tuple of int): Shape of the input of the
                 neural network.
-            first_hidden_shapes ([tuple of int or int]): list of the shape of the
+            hidden_shapes ([tuple of int or int]): list of the shape of the
                 layer. If an int is given, it is a fully connected layer. If a
                 tuple of the shape (a, b, c) is given, it is a convolutional
                 layer with c filters of size a*a with stride b.
             loss (string): Either "l2", "binary_crossentropy" or
                 "multiclass_crossentropy".
             batch_size (integer): Size of one batch during training
+            first_fully_connected_input_shape (integer): Size of the first
+                fully connected layer in a CNN. Used if input_shape is a tuple
+                of ints.
             include_small (boolean): If True, include X_small when computing
                 the training score.
             learning_rate (real): learning rate used during the training.
+            activation (string): can be "relu", "tanh", "sigmoid"
         """
 
         self.input_shape = input_shape
@@ -89,9 +94,15 @@ class ActiveNeuralNetwork():
         self.update_attributes()
 
     def setLR(self, lr):
+        """
+        Change the Learning rate of the optimizer
+        """
         self.nn.setLR(lr)
 
     def update_attributes(self):
+        """
+        Update the variable of this class when the nn size is changing
+        """
         self.prediction = self.nn.prediction
         self.input_tensor = self.nn.input_tensor
         self.params = self.nn.params
@@ -126,12 +137,17 @@ class ActiveNeuralNetwork():
             weights_path (string): Where to find the previous weights if
                 warmstart=True.
             display_step (int): The number of epochs between two displays.
-            stop_at_one (boolean): If true, training will be stopped when
+            stop_at_1 (boolean): If true, training will be stopped when
                 training score reach one.
             nb_min_epoch (int): Minimal number of epoch before the stop of the
                 training
             reduce_factor (real): The gradients of X_small will be divided
                 by this factor.
+            increase_if_not_1 (bool): if true, the size of the main nn will
+                increase each time it does not reach one at the end of its
+                training
+            decrease (bool): if True, it will remove units that are too close
+                together 
 
         Return:
             dictionnary: If callback==True, return the callback.
@@ -168,6 +184,11 @@ class ActiveNeuralNetwork():
     def decrease_complexity(self, sess, threshold=0.001):
         """
         Merge units that are very close.
+
+        Args:
+            sess (tf.Session): current running session
+            threshold (float): if two units are closer than this threshold,
+                they will be merged
         """
 
         toDelete = []
@@ -241,6 +262,10 @@ class ActiveNeuralNetwork():
         """
         Increase the complexity of the neural network by doubling the number
         of units in the hidden layer.
+
+        Args:
+            sess (tf.session): current running session
+            loadPreviousWeights (bool): if True, the old weights will be load.
         """
         old_shape = self.current_hidden_shapes[0]
         self.current_hidden_shapes[0] *= 2
@@ -288,6 +313,9 @@ class ActiveNeuralNetwork():
             loaderFromDict(self.nn.params, sess, dico_saver_new)
 
     def test_dead_units(self, sess, X):
+        """
+        Remove units whose output is always null.
+        """
 
         logging.debug("TEST DEAD UNITS")
         hidden_representations = sess.run(

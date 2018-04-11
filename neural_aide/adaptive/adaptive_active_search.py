@@ -49,6 +49,8 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
             will be plotted.
         callback_save_path (string): Where to save the callbacks. If None,
             the callbacks will not be saved.
+        nb_max_main_epoch (int): maximum number of epochs for the main neural
+            network during one step
         qdb (boolean): If True, use query by disagreement to choose the new
             sample. Else, it uses uncertainty sampling.
         random (boolean): If True, take a random sample in the disagreement
@@ -82,6 +84,8 @@ def active_search(X, y, shapes=[64, 1], max_iterations=501,
             will be randomly sampled.
         reset_filters (bool): If True, the filters will be reset when they are
             to close together.
+        intial_samples (list of int): If None, a positif and a negatif sample
+            will be found in the database. Else, use given samples.
     """
 
     # Initialize variables

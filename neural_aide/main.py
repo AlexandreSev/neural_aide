@@ -59,8 +59,8 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
                              include_background=True, evolutive_small=True,
                              nb_biased_epoch=2000, use_main_weights=False,
                              display=False, save_plot=False, query=1,
-                             biased_lr=0.001, tsm=False, pltlim=True,
-                             tsm_lim=None, reduce_factor=None,
+                             biased_lr=0.001, pltlim=True,
+                             reduce_factor=None,
                              nb_background_points=None, pool_size=None,
                              np_seed=None, tf_seed=None, saving_dir=None,
                              main_lr=0.001, nn_activation="relu",
@@ -96,14 +96,16 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
         save_plot (boolean): If True, advancement plot will be saved.
         query (integer): CF create_query function.
         biased_lr (real): learning rate of biased neural networks.
-        tsm (boolean): Use or not three set.
         pltlim (boolean): Zoom on the positive area
-        tsm_lim (integerr): Maximum number of tuples examined during one
-            iteration of tsm.update_regions
         reduce_factor (real or string): The gradients of the biased sample will
             be divided by this factor. If None, it will be equal to
             len(biased_sample). If "evolutive", it will be equal to
             len(biased_samples) * 2. / X_train.shape[0].
+        nb_background_points (int): If evolutive_small, the number of
+            background points will be set to nb_background_points times the
+            number of labeled points. Else, it will sample nb_background_points
+            at each step. The default value (when set to None) is 2 with
+            evolutive_small and 200 without evolutive_small.
         pool_size (integer): Size of the pool considered to find the most
             uncertain point. If None, the whole X is used.
         np_seed (int): Seed used by numpy. Can be None.
@@ -116,6 +118,11 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
         background_sampling (string). If "uncertain", background points will be
             the most uncertain of the model. If "random", background points
             will be randomly sampled.
+        doubleFilters (boolean): In the case of the biased neural network load
+            the weights of the main nn at each step, these biased nns will have
+            two times more parameters if doubleFilter is set to True.
+        max_iter (integer): maximum of steps of the interactive search phase.
+        log_into_file (boolean): If true, log will be saved in a file.
     """
 
     if saving_dir is None:
@@ -271,6 +278,7 @@ def run_experiment_with_sdss(ressources_folder, qdb=True,
         )
 
 
+#TODO: check if this is still working
 def run_experiment_with_housing(ressources_folder, qdb=True,
                                 random=True, shapes=[32, 32, 1],
                                 include_background=True, evolutive_small=True,
@@ -325,6 +333,7 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
         background_sampling (string). If "uncertain", background points will be
             the most uncertain of the model. If "random", background points
             will be randomly sampled.
+        max_iter (integer): maximum of steps of the interactive search phase.
     """
 
     SAVING_DIRECTORY = pjoin(ressources_folder, "results")
@@ -420,7 +429,7 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
     neg_save_path = pjoin(SAVING_DIRECTORY, "weights_neg.pckl")
 
     if use_main_weights:
-        neural_aide.active_search.active_search(
+        active_search(
             X, y, shapes=shapes, max_iterations=max_iter,
             pos_weights_path=main_weights_path,
             neg_weights_path=main_weights_path,
@@ -437,7 +446,7 @@ def run_experiment_with_housing(ressources_folder, qdb=True,
             background_sampling=background_sampling
         )
     else:
-        neural_aide.active_search.active_search(
+        active_search(
             X, y, shapes=shapes, max_iterations=max_iter,
             pos_weights_path=pos_save_path,
             neg_weights_path=neg_save_path,
